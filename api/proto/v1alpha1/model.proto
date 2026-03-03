@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package matrixhub.v1alpha1;
+
+option go_package = "github.com/matrixhub-ai/matrixhub/api/go/v1alpha1;v1alpha1";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "v1alpha1/utils.proto";
+
+service Models {
+  rpc ListModelTaskLabels(ListModelTaskLabelsRequest) returns (ListModelTaskLabelsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/task-labels"
+    };
+  }
+  rpc ListModelFrameLabels(ListModelFrameLabelsRequest) returns (ListModelFrameLabelsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/frame-labels"
+    };
+  }
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models"
+    };
+  }
+  rpc GetModel(GetModelRequest) returns (Model) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}"
+    };
+  }
+  rpc CreateModel(CreateModelRequest) returns (CreateModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1alpha1/models"
+      body: "*"
+    };
+  }
+  rpc DeleteModel(DeleteModelRequest) returns (DeleteModelResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1alpha1/models/{project}/{name}"
+    };
+  }
+  rpc ListModelRevisions(ListModelRevisionsRequest) returns (ListModelRevisionsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}/revisions"
+    };
+  }
+  rpc ListModelCommits(ListModelCommitsRequest) returns (ListModelCommitsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}/commits"
+    };
+  }
+  rpc GetModelCommit(GetModelCommitRequest) returns (Commit) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}/commits/{id}"
+    };
+  }
+  rpc GetModelTree(GetModelTreeRequest) returns (GetModelTreeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}/tree"
+    };
+  }
+  rpc GetModelBlob(GetModelBlobRequest) returns (GetModelBlobResponse) {
+    option (google.api.http) = {
+      get: "/api/v1alpha1/models/{project}/{name}/blob"
+    };
+  }
+}
+
+message ListModelTaskLabelsRequest {
+}
+
+message ListModelTaskLabelsResponse {
+  repeated Label item = 1;
+}
+
+message ListModelFrameLabelsRequest {
+}
+
+message ListModelFrameLabelsResponse {
+  repeated Label item = 1;
+}
+
+message ListModelsRequest {
+  string label = 1;
+  string search = 2;
+  string sort = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+}
+
+message ListModelsResponse {
+  repeated Model item = 1;
+  Pagination pagination = 3;
+}
+
+message GetModelRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message CreateModelRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message CreateModelResponse {
+}
+
+message DeleteModelRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message DeleteModelResponse {
+}
+
+message ListModelRevisionsRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+}
+
+message ListModelRevisionsResponse {
+  Revisions revisions = 1;
+}
+
+message Revisions {
+  repeated Revision branches = 1;
+  repeated Revision tags = 2;
+}
+
+message ListModelCommitsRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string revision = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+}
+
+message ListModelCommitsResponse {
+  repeated Commit items = 1;
+  Pagination pagination = 2;
+}
+
+message GetModelCommitRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string id = 3 [(validate.rules).string.min_len = 1];
+}
+
+message GetModelTreeRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string revision = 3;
+  string path = 4;
+}
+
+message GetModelTreeResponse {
+  repeated GetModelBlobResponse items = 1;
+}
+
+message GetModelBlobRequest {
+  string project = 1 [(validate.rules).string.min_len = 1];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  string revision = 3;
+  string path = 4;
+}
+
+message GetModelBlobResponse {
+  string name = 1;
+  FileType type = 2;
+  int64 size = 3;
+  string path = 4;
+  string id = 5;
+  bool lfs = 6;
+  string content = 7;
+  Commit commit = 8;
+}
+
+message Model {
+  int32  id = 1;
+  string name = 2;
+  string nickname = 3;
+  string default_branch = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  CloneUrls clone_urls = 7;
+  repeated Label labels = 8;
+  string project = 9;
+  string readme_content = 10;
+  string size = 11;
+}
+
+message CloneUrls {
+  string ssh_url = 1;
+  string http_url = 2;
+}
+
+enum FileType {
+  DIR = 0;
+  FILE = 1;
+}
+
+message Revision {
+  string id = 1;
+  string name = 2;
+  string created_at = 3;
+}
+
+message Commit {
+  string id = 1;
+  string message = 2;
+  string author_name = 3;
+  string author_email = 4;
+  string author_date = 5;
+  string committer_name = 6;
+  string committer_email = 7;
+  repeated Diff diffs = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message Diff {
+  string diff = 1;
+  bool Deleted = 2;
+  string new_path = 3;
+  string old_path = 4;
+}
+
+message Label {
+  int32 id = 1;
+  string name = 2;
+  string created_at = 4;
+  string updated_at = 5;
+}
