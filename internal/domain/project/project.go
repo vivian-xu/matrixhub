@@ -16,13 +16,77 @@ package project
 
 import (
 	"context"
+	"time"
+
+	"github.com/matrixhub-ai/matrixhub/internal/domain/role"
+)
+
+type ProjectType int
+
+const (
+	ProjectTypePrivate ProjectType = iota
+	ProjectTypePublic
+	ProjectTypeUnspecified
 )
 
 type Project struct {
-	Name string `json:"name"`
+	ID           int         `gorm:"primary_key"`
+	Name         string      `gorm:"column:name"`
+	Type         ProjectType `gorm:"column:type"`
+	RegistryID   *int        `gorm:"column:registry_id"`
+	Organization string      `gorm:"column:organization"`
+	RegistryURL  string      `gorm:"-"`
+	ModelCount   int         `gorm:"-"`
+	DatasetCount int         `gorm:"-"`
+	CreatedAt    time.Time   `gorm:"column:created_at"`
+	UpdatedAt    time.Time   `gorm:"column:updated_at"`
 }
 
+func (Project) TableName() string {
+	return "projects"
+}
+
+func (p *Project) HasProxy() bool {
+	return p.RegistryID != nil
+}
+
+type MemberType int
+
+const (
+	MemberTypeUser MemberType = iota
+	MemberTypeGroup
+)
+
+type ProjectMember struct {
+	ID         int           `gorm:"primary_key"`
+	ProjectID  int           `gorm:"column:project_id;index"`
+	MemberID   string        `gorm:"column:member_id"`
+	MemberType MemberType    `gorm:"column:member_type"`
+	RoleID     role.RoleType `gorm:"column:role_id"`
+	CreatedAt  time.Time     `gorm:"column:created_at"`
+	UpdatedAt  time.Time     `gorm:"column:updated_at"`
+}
+
+func (ProjectMember) TableName() string {
+	return "members_roles_projects"
+}
+
+type Member struct {
+	MemberID   string
+	MemberType MemberType
+}
+
+// IProjectRepo defines the project repository interface
 type IProjectRepo interface {
+	CreateProject(ctx context.Context, project *Project) error
+	GetProjectByName(ctx context.Context, name string) (*Project, error)
 	GetProject(ctx context.Context, param *Project) (*Project, error)
-	CreateProject(ctx context.Context, param *Project) error
+	ListProjects(ctx context.Context, name string, projectType ProjectType, managedOnly bool, page, pageSize int) ([]*Project, int64, error)
+	UpdateProject(ctx context.Context, project *Project) error
+	DeleteProject(ctx context.Context, name int) error
+
+	ListProjectMembers(ctx context.Context, projectID int, memberName string, page, pageSize int) ([]*ProjectMember, int64, error)
+	AddProjectMemberWithRole(ctx context.Context, projectMember *ProjectMember) error
+	RemoveProjectMembers(ctx context.Context, projectID int, members []*Member) error
+	UpdateProjectMemberRole(ctx context.Context, projectID int, memberID string, role role.RoleType) error
 }

@@ -20,11 +20,54 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/role"
 )
 
 type ProjectDBRepo struct {
 	db *gorm.DB
 }
+
+func (r *ProjectDBRepo) GetProjectByName(ctx context.Context, name string) (*project.Project, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) ListProjects(ctx context.Context, name string, projectType project.ProjectType, managedOnly bool, page, pageSize int) ([]*project.Project, int64, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) UpdateProject(ctx context.Context, project *project.Project) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) DeleteProject(ctx context.Context, name int) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) ListProjectMembers(ctx context.Context, projectID int, memberName string, page, pageSize int) ([]*project.ProjectMember, int64, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) AddProjectMemberWithRole(ctx context.Context, projectMember *project.ProjectMember) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) RemoveProjectMembers(ctx context.Context, projectID int, members []*project.Member) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ProjectDBRepo) UpdateProjectMemberRole(ctx context.Context, projectID int, memberID string, role role.RoleType) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+var _ project.IProjectRepo = (*ProjectDBRepo)(nil)
 
 func NewProjectDBRepo(db *gorm.DB) *ProjectDBRepo {
 	return &ProjectDBRepo{db}
