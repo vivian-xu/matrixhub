@@ -67,13 +67,17 @@ func (sjs *SyncJobService) ExecuteSyncJob(ctx context.Context, syncJob *SyncJob)
 	if err != nil {
 		return err
 	}
-	prj, _ := sjs.projectRepo.GetProjectByName(ctx, syncJob.ProjectName)
-	if prj == nil {
-		prj = &project.Project{
-			Name: syncJob.ProjectName,
-		}
-		prj, err = sjs.projectRepo.CreateProject(ctx, prj)
-		if err == nil {
+	prj, err := sjs.projectRepo.GetProjectByName(ctx, syncJob.ProjectName)
+	if err != nil {
+		if syncJob.HasReplicationTask() {
+			prj = &project.Project{
+				Name: syncJob.ProjectName,
+			}
+			prj, err = sjs.projectRepo.CreateProject(ctx, prj)
+			if err == nil {
+				return err
+			}
+		} else {
 			return err
 		}
 	}
@@ -103,6 +107,6 @@ func (sjs *SyncJobService) ExecuteSyncJob(ctx context.Context, syncJob *SyncJob)
 			return err
 		}
 	}
-	syncJob.CompletePercents = 100
-	return sjs.syncJobRepo.UpdateSyncJob(ctx, syncJob)
+
+	return nil
 }

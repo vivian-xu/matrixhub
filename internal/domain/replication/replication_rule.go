@@ -12,14 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package syncjob
+package replication
 
 import (
 	"context"
+
+	"github.com/matrixhub-ai/matrixhub/internal/domain/syncjob"
 )
 
-type SyncJob struct {
+// Todo: change it according to requirement
+type ReplicationRule struct {
 	ID                 int
+	Name               string
+	Description        string
 	RemoteRegistryID   int
 	RemoteProjectName  string
 	RemoteResourceName string
@@ -27,18 +32,12 @@ type SyncJob struct {
 	ResourceName       string
 	ResourceType       string
 	SyncType           string
-	ReplicationTaskID  int
-	CompletePercents   int
 }
 
-func (p *SyncJob) HasReplicationTask() bool {
-	return p.ReplicationTaskID > 0
-}
-
-type ISyncJobRepo interface {
-	CreateSyncJob(ctx context.Context, syncJob *SyncJob) error
-	GetSyncJob(ctx context.Context, syncJob *SyncJob) (*SyncJob, error)
-	UpdateSyncJob(ctx context.Context, syncJob *SyncJob) error
-	DeleteSyncJob(ctx context.Context, syncJob *SyncJob) error
-	ListSyncJobsByTaskID()
+type IReplicationRuleRepo interface {
+	CreateReplicationRule(ctx context.Context, rule *ReplicationRule) error
+	GetReplicationRule(ctx context.Context, rule *ReplicationRule) (*ReplicationRule, error)
+	UpdateReplicationRule(ctx context.Context, rule *ReplicationRule) error
+	DeleteReplicationRule(ctx context.Context, rule *ReplicationRule) error
+	GenerateReplicationTaskAndSyncJobs(ctx context.Context, rule *ReplicationRule) (*ReplicationTask, []*syncjob.SyncJob, error)
 }
