@@ -1,6 +1,6 @@
 # Implementation Constraints
 
-This document combines the current UI stack and the key rules around Mantine, TanStack Router, and i18n.
+This document combines the current UI stack and the key rules around Mantine, TanStack Router, TanStack Form, Zod, and i18n.
 
 ## Stack
 
@@ -10,6 +10,8 @@ This document combines the current UI stack and the key rules around Mantine, Ta
 - `TypeScript`
 - `Mantine v8`
 - `TanStack Router`
+- `TanStack Form`
+- `Zod`
 - `react-i18next`
 - `ESLint v9`
 
@@ -35,6 +37,64 @@ This document combines the current UI stack and the key rules around Mantine, Ta
 - Route files own route definitions, layouts, redirects, and metadata
 - Non-trivial pages should live in `src/features` and be mounted by the route
 - Do not let complex business logic stay in route files long term
+
+## Forms
+
+- Use `@tanstack/react-form` for all forms in this project
+- Use `Zod` as the default validation and schema definition approach for form data
+- Do not use uncontrolled forms, native ad-hoc form state, Mantine `useForm`, or other form libraries for new form work
+- Prefer TanStack Form validators backed by `Zod` schemas instead of duplicating validation logic by hand
+- Use TanStack Form validators for field-level validation and `onSubmit` validation for form-level or cross-field rules
+- Keep Mantine as the field UI layer; bind TanStack Form state to Mantine component props such as `value`, `checked`, `onChange`, and `error`
+
+Example:
+
+```tsx
+import { TextInput } from '@mantine/core'
+import { useForm } from '@tanstack/react-form'
+import { z } from 'zod'
+
+const nameSchema = z.string().trim().min(1, 'Project name is required')
+
+function CreateProjectForm() {
+  const form = useForm({
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+    onSubmit: async ({ value }) => {
+      await createProject(value)
+    },
+  })
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        form.handleSubmit()
+      }}
+    >
+      <form.Field
+        name="name"
+        validators={{
+          onChange: ({ value }) => {
+            const result = nameSchema.safeParse(value)
+            return result.success ? undefined : result.error.issues[0]?.message
+          },
+        }}
+        children={(field) => (
+          <TextInput
+            label={t('projects.nameLabel')}
+            value={field.state.value}
+            onChange={(event) => field.handleChange(event.currentTarget.value)}
+            error={field.state.meta.errors?.[0]}
+          />
+        )}
+      />
+    </form>
+  )
+}
+```
 
 ## Feature Page Splitting Guidelines
 

@@ -7,6 +7,7 @@ Use this checklist to quickly judge whether a change still follows the current U
 - Is the change small enough in scope and clear enough in intent?
 - If this is a new page, was page planning done first?
 - Does the route file still mainly own route responsibilities?
+- If the change includes a form, does it use `TanStack Form` with `Zod` based validation and keep Mantine as the UI layer instead of `useForm`, ad-hoc form state, or a different validation scheme?
 - Was new user-facing copy added to locale files?
 - Does the implementation continue the existing Mantine and project patterns?
 

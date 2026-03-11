@@ -12,7 +12,8 @@ dist
 dist-ssr
 *.local
 .tanstack
-.planning/
+.planning/*
+!.planning/admin-users
 !.planning/admin-users/**
 
 # Editor directories and files

@@ -14,12 +14,12 @@ Default project rules, collaboration conventions, and example materials live in 
    - `ui/agents/rules/api-layer.md` for generated SDK usage
    - `ui/agents/collaboration/review-checklist.md` when reviewing or before handoff
 3. Use `ui/agents/examples/page-plan-example.md` only when a concrete example is useful.
-4. If `ui/.planning/<task-slug>/task.md` exists, treat it as supplemental task input only. It does not override project rules.
+4. If `ui/.planning/<task-slug>/task.md` exists, treat it as an optional working example for implementing a specific new feature. It does not override project rules.
 
 ## Workflow
 
 - Humans usually provide task inputs such as Figma links, screenshots, API references, and short remarks.
-- The agent reads the project rules first, then uses `task.md` only for current-task inputs, exceptions, and extra notes.
+- The agent reads the project rules first, then uses `task.md` only when a specific feature task chose that lightweight example format for local working notes.
 - The agent should infer route placement, feature structure, API usage, and implementation details from the rules and codebase unless the task explicitly says otherwise.
 
 ## Rules And Inputs
@@ -29,16 +29,16 @@ Default project rules, collaboration conventions, and example materials live in 
 - `ui/agents/examples/*`: real working examples
 - If workflow skills are added later, put them under `ui/agents/skills/*`
 
-Temporary task materials should live under `ui/.planning/<task-slug>/`.
+Temporary working materials for a specific feature task may live under `ui/.planning/<task-slug>/`.
 
 Organize the folder by task, and only keep inputs and drafts that are actually needed for that task. Typical contents include:
 
-- `task.md`: an optional lightweight note for the current task, usually just inputs, special remarks, and open questions
+- `task.md`: an optional lightweight example note for implementing a specific new feature, usually just inputs, special remarks, and open questions
 - Other local attachments: screenshots, cropped images, exported docs, and similar working files
 
 Typical inputs can be as small as a Figma link, Figma MCP reference, CLI Dev Mode access, screenshots, and a few short notes. The default expectation is that humans provide only inputs and special remarks; the agent should infer implementation details from the rules and codebase unless the task has unusual constraints.
 
-`ui/.planning/` is a local working directory and is already ignored by `.gitignore`. Use it for task inputs, comparisons, and drafts, but do not treat it as a long-term rules repository.
+`ui/.planning/` is a local working directory and is already ignored by `.gitignore`. Use it for feature-specific working inputs, comparisons, and drafts when helpful, but do not treat it as a required workflow step or a long-term rules repository.
 
 If directories such as `.claude/`, `.codex/`, or `.opencode/` appear later, they are adapters only. They must not become the source of project rules.
 
@@ -47,6 +47,7 @@ If directories such as `.claude/`, `.codex/`, or `.opencode/` appear later, they
 - Manually edit `src/routeTree.gen.ts`
 - Keep adding complex business logic directly in `src/routes`
 - Add more hardcoded user-facing copy for new UI
+- Introduce a new form library, Mantine `useForm`, ad-hoc form state, or a different validation scheme for new forms when `TanStack Form` and `Zod` are the project standards
 - Build a parallel styling system when Mantine theme tokens already cover the use case
 - Add new top-level architecture layers without agreement
 

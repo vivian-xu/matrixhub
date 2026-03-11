@@ -24,6 +24,7 @@ Typical inputs are enough if they are available: a Figma link, Figma MCP referen
 5. Which states the page has: loading, empty, error, and success
 6. Which parts come from design inputs or requirements, and which gaps should be filled by existing code and Mantine
 7. Which API reads and writes the page depends on, and which API surfaces are intentionally not needed yet
+8. If the page includes forms, which form sections, `Zod` schemas, validation rules, submit flows, and success or error states should be modeled with `TanStack Form`
 
 ## Component Split Guidelines
 
