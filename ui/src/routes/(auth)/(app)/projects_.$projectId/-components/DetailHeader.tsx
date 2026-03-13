@@ -86,17 +86,17 @@ export function DetailHeader({
       <Group gap="xl">
         <Text size="sm" c="dimmed">
           {t('common.fromProject')}
-          ：
+          {t('common.colon')}
           {projectId}
         </Text>
         <Text size="sm" c="dimmed">
           {t('common.modelSize')}
-          ：
+          {t('common.colon')}
           {size ?? '-'}
         </Text>
         <Text size="sm" c="dimmed">
           {t('common.updatedAt')}
-          ：
+          {t('common.colon')}
           {updatedAt ?? '-'}
         </Text>
       </Group>

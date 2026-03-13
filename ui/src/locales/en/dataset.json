@@ -1,11 +1,6 @@
 {
-  "copied": "Copied",
-  "copyName": "Copy name",
   "uploadFiles": "Upload Dataset Files",
   "downloadDataset": "Download Dataset",
-  "project": "Project",
-  "size": "Dataset Size",
-  "updatedAt": "Updated",
   "detail": {
     "desc": "Dataset Introduction",
     "tree": "Dataset Files",
