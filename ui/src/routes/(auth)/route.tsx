@@ -51,7 +51,7 @@ function AppLogo() {
         <Text
           fw={600}
           size="xl"
-          c="#000"
+          c="var(--mantine-color-black)"
         >
           MatrixHub
         </Text>
@@ -86,7 +86,7 @@ function AppNavbar() {
 
   return (
     <Group
-      gap="var(--mantine-spacing-md)"
+      gap="sm"
       wrap="nowrap"
     >
       {navRoutes.map((route) => {
@@ -175,7 +175,7 @@ function AccountMenu() {
       <Menu.Target>
         <UnstyledButton>
           <Group
-            gap="var(--mantine-spacing-sm)"
+            gap={8}
             wrap="nowrap"
           >
             <Avatar
