@@ -13,8 +13,6 @@ dist-ssr
 *.local
 .tanstack
 .planning/*
-!.planning/admin-users
-!.planning/admin-users/**
 
 # Editor directories and files
 .vscode/*
@@ -26,5 +24,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-

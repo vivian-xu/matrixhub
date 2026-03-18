@@ -22,6 +22,7 @@ This document combines the current UI stack and the key rules around Mantine, Ta
 - `VITE_UI_BASE_PATH` controls the deployed UI base path
 - `src/routeTree.gen.ts` is generated and must only be produced by tooling
 - If an agent creates, changes, or expands a shared wrapper, shared component convention, or other stable implementation pattern, the agent must update the relevant docs under `ui/agents/` in the same change
+- In hand-written code, fix lint and type issues directly instead of suppressing them with broad directive comments. If an exception is truly unavoidable, scope it to the narrowest rule and line possible and explain why. Generated files are the exception.
 
 ## Mantine
 
