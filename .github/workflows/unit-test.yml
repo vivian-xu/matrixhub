@@ -7,7 +7,6 @@ on:
     paths:
       - 'cmd/**'
       - 'internal/**'
-      - 'pkg/**'
 
   pull_request:
     branches:
@@ -15,7 +14,6 @@ on:
     paths:
       - 'cmd/**'
       - 'internal/**'
-      - 'pkg/**'
 
 jobs:
   go-unit-test:
@@ -47,4 +45,4 @@ jobs:
         continue-on-error: true
 
       - name: Run unit tests
-        run: go test pkg/... internal/... -short -count=1 -v
+        run: go test cmd/... internal/... -short -count=1 -v

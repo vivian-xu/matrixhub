@@ -60,37 +60,6 @@ help: ## Display this help.
 lint-fix: ## Run golangci-lint with --fix option
 	$(GO_CMD) run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0 run --fix
 
-web/dist: web
-	make -C web dist
-
-.PHONY: serve-web
-serve-web: ## Run web frontend locally
-	make -C web serve
-
-.PHONY: serve-api
-serve-api: ## Serve the API only
-	go run ./cmd/poc
-
-.PHONY: run
-run: ## Run MatrixHub locally (web + API)
-	make -j2 serve-web serve-api
-
-.PHONY: image-build
-image-build: ## Build the MatrixHub image
-	$(IMAGE_BUILD_CMD) \
-		-t $(IMAGE_REPO):$(GIT_TAG) \
-		-t $(IMAGE_REPO):$(GIT_BRANCH) \
-		$(if $(PLATFORMS),--platform=$(PLATFORMS)) \
-		--build-arg BASE_IMAGE_PREFIX=$(BASE_IMAGE_PREFIX) \
-		--build-arg NPM_CONFIG_REGISTRY=$(NPM_CONFIG_REGISTRY) \
-		--build-arg GOPROXY=$(GOPROXY) \
-		--build-arg HTTP_PROXY="$(HTTP_PROXY)" \
-		--build-arg HTTPS_PROXY="$(HTTPS_PROXY)" \
-		--build-arg LD_FLAGS="$(LD_FLAGS)" \
-		$(PUSH) \
-		$(IMAGE_BUILD_EXTRA_OPTS) \
-		.
-
 .PHONY: image-build-apiserver
 image-build-apiserver: ## Build the MatrixHub apiserver image
 	$(IMAGE_BUILD_CMD) \
@@ -121,7 +90,6 @@ serve-website: ## Run documentation website locally
 .PHONY: clean
 clean: ## Clean all build artifacts
 	rm -rf bin
-	make -C web clean
 	make -C website clean
 
 .PHONY: local-run-web
@@ -131,11 +99,6 @@ local-run-web: ## Run web frontend locally
 .PHONY: local-run-api
 local-run-api: ## Serve the API only
 	go run ./cmd/matrixhub apiserver
-
-
-.PHONY: local-run
-local-run: ## Run MatrixHub locally (web + API)
-	make -j2 local-run-web local-run-api
 
 ##@ E2E Testing
 
