@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   type BoxProps,
   Button,
   Center,
@@ -6,7 +7,9 @@ import {
   Stack,
   type TableProps as MantineTableProps,
   Text,
+  Tooltip,
 } from '@mantine/core'
+import { IconRefresh, IconTrash } from '@tabler/icons-react'
 import { MantineReactTable } from 'mantine-react-table'
 import { useTranslation } from 'react-i18next'
 
@@ -246,24 +249,31 @@ export function DataTable<TData extends MRT_RowData>({
           }}
 
         >
-          {showBatchDelete && (
-            <Button
-              color="red"
-              variant="light"
-              onClick={onBatchDelete}
-            >
-              {t('shared.batchDelete', { count: selectedCount })}
-            </Button>
-          )}
           {onRefresh && (
-            <Button
-              variant="default"
-              onClick={onRefresh}
-              loading={loading}
-            >
-              {t('shared.refresh')}
-            </Button>
+            <Tooltip label={t('shared.refresh')}>
+              <ActionIcon
+                variant="white"
+                size="lg"
+                onClick={onRefresh}
+                loading={loading}
+                c="gray.6"
+              >
+                <IconRefresh width={24} height={24} />
+              </ActionIcon>
+            </Tooltip>
           )}
+          <Button
+            color="red"
+            variant="light"
+            disabled={!showBatchDelete}
+            leftSection={<IconTrash width={16} height={16} />}
+            onClick={onBatchDelete}
+          >
+            {!selectedCount
+              ? t('shared.batchDelete')
+              : t('shared.batchDeleteWithCount', { count: selectedCount })}
+          </Button>
+
           {toolbarExtra}
         </SearchToolbar>
       )

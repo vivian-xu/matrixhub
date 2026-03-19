@@ -6,6 +6,7 @@
   "modelSize": "模型大小",
   "colon": "：",
   "noResults": "暂无数据",
+  "required": "必填",
   "confirm": "确定",
   "cancel": "取消",
   "backgroundRefreshFailed": "后台刷新失败",
@@ -20,5 +21,8 @@
       "title": "访问被拒绝",
       "description": "很抱歉，您当前的账号权限不足，无法访问此页面。"
     }
+  },
+  "validation": {
+    "required": "必填"
   }
 }

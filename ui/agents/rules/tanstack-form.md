@@ -5,6 +5,7 @@ This document defines the conventions for using TanStack Form v1 in this project
 ## Schema-First Validation
 
 Define Zod schemas first, then use them as validators. Do not duplicate validation logic by hand.
+TanStack Form v1 supports Standard Schema natively — Zod 4 schemas can be passed directly to field-level `validators` without any adapter. Let Zod provide the error messages.
 
 ```ts
 // src/features/{feature}/{feature}.schema.ts
@@ -22,11 +23,14 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>
 ## Basic Form Pattern
 
 Bind TanStack Form state to Mantine components. Keep Mantine as the field UI layer.
+Use Mantine's own `label` and `withAsterisk` props on form field components for labelling — do not render separate `<Text>` elements as field labels.
+Use `.toString()` when passing `field.state.meta.errors` to Mantine `error` props, since Standard Schema errors are objects, not strings.
 
 ```tsx
 import { useForm } from '@tanstack/react-form'
 import { TextInput, Textarea, Button, Stack } from '@mantine/core'
 import { useMutation } from '@tanstack/react-query'
+import { fieldError } from '@/shared/utils/form'
 import { createProjectSchema } from '../project.schema'
 import { createProjectMutationOptions } from '../project.mutation'
 
@@ -61,7 +65,7 @@ function CreateProjectForm({ onSuccess }: { onSuccess: () => void }) {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.currentTarget.value)}
               onBlur={field.handleBlur}
-              error={field.state.meta.errors?.[0]?.toString()}
+              error={fieldError(field)}
             />
           )}
         </form.Field>
@@ -73,7 +77,7 @@ function CreateProjectForm({ onSuccess }: { onSuccess: () => void }) {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.currentTarget.value)}
               onBlur={field.handleBlur}
-              error={field.state.meta.errors?.[0]?.toString()}
+              error={fieldError(field)}
             />
           )}
         </form.Field>
@@ -105,16 +109,13 @@ Choose the appropriate validation timing based on field type:
 | `onBlur`   | Fields where real-time validation is distracting (e.g. email, complex patterns) |
 | `onSubmit` | Expensive validators, cross-field rules, or server-side uniqueness checks       |
 
-Field-level and form-level validators can be combined:
+Pass Zod schemas directly to field validators — TanStack Form handles `safeParse` and error extraction automatically via Standard Schema:
 
 ```tsx
 <form.Field
   name="slug"
   validators={{
-    onBlur: ({ value }) => {
-      const result = slugSchema.safeParse(value)
-      return result.success ? undefined : result.error.issues[0]?.message
-    },
+    onBlur: slugSchema,
     onChangeAsyncDebounceMs: 500,
     onChangeAsync: async ({ value, signal }) => {
       const exists = await checkSlugExists(value, signal)
@@ -128,7 +129,7 @@ Field-level and form-level validators can be combined:
       value={field.state.value}
       onChange={(e) => field.handleChange(e.currentTarget.value)}
       onBlur={field.handleBlur}
-      error={field.state.meta.errors?.[0]?.toString()}
+      error={fieldError(field)}
     />
   )}
 </form.Field>
@@ -141,7 +142,6 @@ Connect TanStack Form's `onSubmit` to TanStack Query mutations. The mutation han
 ```tsx
 const form = useForm({
   defaultValues: { name: '', description: '' },
-  validators: { onChange: createProjectSchema },
   onSubmit: async ({ value }) => {
     // mutateAsync throws on error, which TanStack Form catches
     // and sets form.state.isSubmitting = false
@@ -163,7 +163,6 @@ const form = useForm({
     name: project.name ?? '',
     description: project.description ?? '',
   },
-  validators: { onChange: updateProjectSchema },
   onSubmit: async ({ value }) => {
     await updateMutation.mutateAsync({ projectId, ...value })
     onSuccess()
@@ -180,7 +179,7 @@ const form = useForm({
   value={field.state.value}
   onChange={(e) => field.handleChange(e.currentTarget.value)}
   onBlur={field.handleBlur}
-  error={field.state.meta.errors?.[0]?.toString()}
+  error={fieldError(field)}
 />
 ```
 
@@ -192,7 +191,7 @@ const form = useForm({
   value={field.state.value}
   onChange={(val) => field.handleChange(val ?? '')}
   onBlur={field.handleBlur}
-  error={field.state.meta.errors?.[0]?.toString()}
+  error={fieldError(field)}
 />
 ```
 
@@ -202,14 +201,17 @@ const form = useForm({
 <Switch
   checked={field.state.value}
   onChange={(e) => field.handleChange(e.currentTarget.checked)}
-  error={field.state.meta.errors?.[0]?.toString()}
+  error={fieldError(field)}
 />
 ```
 
 ## Do Not
 
 - Use Mantine `useForm` or uncontrolled form patterns — use `@tanstack/react-form`
-- Write inline validation logic when a Zod schema exists — reuse the schema
+- Write inline validation logic when a Zod schema exists — reuse the schema; pass schemas directly to field validators via Standard Schema
+- Write manual `safeParse` calls in validators — TanStack Form handles this automatically via Standard Schema
+- Provide hand-written error messages that duplicate what the Zod schema already expresses — let Zod provide the error messages
+- Render separate `<Text>` elements as field labels — use Mantine's own `label` and `withAsterisk` props
 - Duplicate API error handling in form `onSubmit` catch blocks — rely on `MutationCache`
 - Create form state outside TanStack Form (e.g. `useState` for field values)
 - Skip `onBlur` binding — it is required for blur-time validators and touched state tracking

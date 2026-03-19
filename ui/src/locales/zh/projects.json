@@ -24,6 +24,49 @@
       "save": "保存",
       "cancel": "取消",
       "updateError": "更新项目设置失败"
+    },
+    "membersPage": {
+      "searchPlaceholder": "用户名称",
+      "addMember": "添加成员",
+      "table": {
+        "name": "名称",
+        "memberType": "成员类型",
+        "roleType": "权限类型",
+        "actions": "操作",
+        "empty": "暂无成员"
+      },
+      "memberType": {
+        "user": "用户",
+        "group": "用户组"
+      },
+      "role": {
+        "admin": "管理员权限",
+        "editor": "开发权限",
+        "viewer": "只读权限"
+      },
+      "actions": {
+        "editRole": "编辑权限",
+        "remove": "删除"
+      },
+      "addMemberModal": {
+        "title": "添加成员",
+        "memberType": "成员类型",
+        "user": "用户",
+        "roleType": "权限类型"
+      },
+      "editRoleModal": {
+        "title": "编辑权限",
+        "user": "用户",
+        "roleType": "权限类型"
+      },
+      "removeModal": {
+        "title": "移除成员",
+        "message": "确定要移除用户 {{userName}} 吗?移除后该成员将不再拥有 {{projectName}} 的 {{role}} 权限。"
+      },
+      "batchRemoveModal": {
+        "title": "批量移除",
+        "message": "确定要移除 {{count}} 个成员吗?移除后该成员将不再拥有 {{projectName}} 的相应权限。"
+      }
     }
   },
   "type": {
