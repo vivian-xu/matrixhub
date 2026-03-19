@@ -1,27 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { ModelSettingsPage } from '@/features/models/pages/ModelSettingsPage'
+
 export const Route = createFileRoute(
   '/(auth)/(app)/projects_/$projectId/models/$modelId/settings/',
 )({
-  component: RouteComponent,
+  component: ModelSettings,
 })
 
-function RouteComponent() {
+function ModelSettings() {
   const {
     projectId, modelId,
   } = Route.useParams()
 
   return (
-    <div>
-      Model Settings Form
-      <br />
-      Project ID:
-      {' '}
-      {projectId}
-      <br />
-      Model ID:
-      {' '}
-      {modelId}
-    </div>
+    <ModelSettingsPage
+      projectId={projectId}
+      modelId={modelId}
+    />
   )
 }

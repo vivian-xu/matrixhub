@@ -5,5 +5,19 @@
     "desc": "Model Introduction",
     "tree": "Model Files",
     "setting": "Settings"
+  },
+  "settings": {
+    "delete": {
+      "title": "Delete Model",
+      "warning": "This action cannot be undone. This will permanently delete the {{name}} model repository and all of its files, including weights.",
+      "confirmation": "Please enter {{name}}",
+      "action": "Delete Model"
+    },
+    "recommended": {
+      "title": "Featured Model",
+      "label": "Mark as featured model",
+      "confirmation": "Are you sure you want to mark model {{name}} as a featured model?",
+      "unsetConfirmation": "Are you sure you want to remove {{name}} from featured models?"
+    }
   }
 }

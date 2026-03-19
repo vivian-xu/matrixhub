@@ -4,5 +4,7 @@
   "updatedAt": "Updated",
   "fromProject": "Project",
   "modelSize": "Size",
-  "colon": ": "
+  "colon": ": ",
+  "confirm": "Confirm",
+  "cancel": "Cancel"
 }

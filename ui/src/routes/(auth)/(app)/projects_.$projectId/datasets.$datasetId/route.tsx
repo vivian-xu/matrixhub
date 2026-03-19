@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import DownloadIcon from '@/assets/svgs/download.svg?react'
 import UploadIcon from '@/assets/svgs/upload-cloud.svg?react'
-import { ResourceDetailHeader } from '@/components/ResourceDetailHeader'
+import { ResourceDetailHeader } from '@/shared/components/ResourceDetailHeader'
 
 import { Route as DatasetSettingsRoute } from './settings'
 import { Route as DatasetTreeRoute } from './tree/$ref/$'

@@ -3,6 +3,7 @@ import {
   Badge,
   CopyButton,
   Group,
+  rem,
   Text,
   Tooltip,
 } from '@mantine/core'
@@ -19,9 +20,7 @@ interface ResourceDetailHeaderProps {
   name: string
   size?: string
   updatedAt?: string
-  /** Label list to render as badges */
   labels?: Label[]
-  /** Action buttons (upload, download, etc.) */
   actions?: ReactNode
 }
 
@@ -36,9 +35,23 @@ export function ResourceDetailHeader({
   const { t } = useTranslation()
   const fullName = `${projectId}/${name}`
 
+  const metaItems = [
+    {
+      label: t('common.fromProject'),
+      value: projectId,
+    },
+    {
+      label: t('common.modelSize'),
+      value: size ?? '-',
+    },
+    {
+      label: t('common.updatedAt'),
+      value: updatedAt ?? '-',
+    },
+  ]
+
   return (
     <>
-      {/* Row 1: Breadcrumb + Action buttons */}
       <Group justify="space-between" align="flex-start" mb={10}>
         <Group gap="4" align="center">
           <Text
@@ -56,8 +69,7 @@ export function ResourceDetailHeader({
           <Text size="lg" c="gray.9" lh="28px">{name}</Text>
           <CopyButton value={fullName} timeout={2000}>
             {({
-              copied,
-              copy,
+              copied, copy,
             }) => (
               <Tooltip label={copied ? t('common.copied') : t('common.copyName')} withArrow>
                 <ActionIcon variant="subtle" color="gray" onClick={copy} size={24}>
@@ -70,7 +82,6 @@ export function ResourceDetailHeader({
         {actions && <Group gap="sm">{actions}</Group>}
       </Group>
 
-      {/* Row 2: Badges */}
       {labels?.length && (
         <Group gap={8} mb={12}>
           {labels.map(label => (
@@ -81,23 +92,14 @@ export function ResourceDetailHeader({
         </Group>
       )}
 
-      {/* Row 3: Metadata */}
-      <Group gap={24}>
-        <Text size="12px" lh="20px" c="dimmed">
-          {t('common.fromProject')}
-          {t('common.colon')}
-          {projectId}
-        </Text>
-        <Text size="12px" lh="20px" c="dimmed">
-          {t('common.modelSize')}
-          {t('common.colon')}
-          {size ?? '-'}
-        </Text>
-        <Text size="12px" lh="20px" c="dimmed">
-          {t('common.updatedAt')}
-          {t('common.colon')}
-          {updatedAt ?? '-'}
-        </Text>
+      <Group gap={24} fz="xs" lh={rem(20)} c="dimmed">
+        {metaItems.map(item => (
+          <span key={item.label}>
+            {item.label}
+            {t('common.colon')}
+            {item.value}
+          </span>
+        ))}
       </Group>
     </>
   )

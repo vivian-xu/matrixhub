@@ -1,9 +1,32 @@
-import { createTheme, rem } from '@mantine/core'
+import {
+  Alert,
+  createTheme,
+  rem,
+  Tabs,
+} from '@mantine/core'
 
 import type { CSSVariablesResolver } from '@mantine/core'
 
 export const mantineTheme = createTheme({
   primaryColor: 'cyan',
+  components: {
+    TabsTab: Tabs.Tab.extend({
+      defaultProps: {
+        lh: rem(20),
+        fw: 600,
+        px: 12,
+        pt: 8,
+        pb: 6,
+      },
+    }),
+    Alert: Alert.extend({
+      defaultProps: {
+        px: 'md',
+        py: 'sm',
+        bd: 'none',
+      },
+    }),
+  },
 })
 
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
@@ -12,6 +35,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--app-size-icon-md': rem(16),
     '--app-size-icon-sm': rem(16),
     '--app-size-radius-mmd': rem(6),
+    '--tabs-list-gap': rem(20),
   },
   light: {
     '--mantine-color-text': 'var(--mantine-color-gray-9)',

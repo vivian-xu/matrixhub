@@ -77,7 +77,6 @@ function Profile() {
             label, value, ...linkProps
           }) => {
             return (
-              // TODO: tab style should keep same in different page
               <Tabs.Tab
                 key={value}
                 value={value}

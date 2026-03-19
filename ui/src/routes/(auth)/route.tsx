@@ -22,7 +22,6 @@ import ModelIcon from '@/assets/svgs/model.svg?react'
 import ProjectIcon from '@/assets/svgs/project.svg?react'
 import SettingsIcon from '@/assets/svgs/settings.svg?react'
 import UserIcon from '@/assets/svgs/user.svg?react'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Route as DatasetsRoute } from '@/routes/(auth)/(app)/datasets'
 import { Route as CreateDatasetRoute } from '@/routes/(auth)/(app)/datasets/new'
 import { Route as ModelsRoute } from '@/routes/(auth)/(app)/models'
@@ -32,6 +31,7 @@ import { Route as ProjectsRoute } from '@/routes/(auth)/(app)/projects'
 import { Route as ProjectDatasetRoute } from '@/routes/(auth)/(app)/projects_.$projectId/datasets.$datasetId/route'
 import { Route as ProjectModelRoute } from '@/routes/(auth)/(app)/projects_.$projectId/models.$modelId/route'
 import { Route as AdminRoute } from '@/routes/(auth)/admin'
+import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher'
 
 export const Route = createFileRoute('/(auth)')({
   component: AuthLayout,
