@@ -40,6 +40,7 @@ export function ModelSettingsPage({
         name: modelId,
       })
 
+      // Fixme: confirm navigation to which page
       navigate({ to: ModelsRoute.to })
     } catch (e) {
       // TODO: handle error noty

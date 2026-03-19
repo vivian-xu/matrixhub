@@ -57,6 +57,7 @@ function ModelDetailLayout() {
       params: {
         projectId,
         modelId,
+        // TODO: use real ref
         ref: 'main',
       },
     },
