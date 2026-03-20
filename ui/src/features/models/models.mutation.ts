@@ -1,4 +1,4 @@
-import { type DeleteModelRequest, Models } from '@matrixhub/api-ts/v1alpha1/model.pb'
+import { type CreateModelRequest, type DeleteModelRequest, Models } from '@matrixhub/api-ts/v1alpha1/model.pb'
 import { mutationOptions } from '@tanstack/react-query'
 
 import { modelKeys } from '@/features/models/models.query'

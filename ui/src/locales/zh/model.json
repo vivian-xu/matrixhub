@@ -1,5 +1,5 @@
 {
-  "new": "新建模型",
+  "new": "创建模型",
   "project": "项目",
   "library": "框架",
   "task": "任务",
@@ -33,5 +33,20 @@
       "confirmation": "确定要设置模型 {{name}} 为热门模型吗？",
       "unsetConfirmation": "确定要取消 {{name}} 的热门模型状态吗？"
     }
+  },
+  "create": {
+    "modelName": "模型名称",
+    "modelNamePlaceholder": "请输入模型名称",
+    "modelNameHelper": "支持数字、字母、下划线、短横线和点，且只能以数字、字母开头",
+    "project": "所属项目",
+    "projectPlaceholder": "请选择项目",
+    "projectTooltip": "私有项目中的所有模型/数据集均为私有，公开项目中的所有模型/数据集均为公开。",
+    "submit": "创建模型",
+    "uploadTip": "模型创建完成后，您可以使用命令行上传文件。",
+    "modelNameRequired": "请输入模型名称",
+    "modelNameInvalid": "模型名称格式不正确",
+    "projectRequired": "请选择所属项目",
+    "success": "模型创建成功",
+    "error": "创建模型失败"
   }
 }
