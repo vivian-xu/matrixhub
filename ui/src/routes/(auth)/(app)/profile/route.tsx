@@ -8,10 +8,11 @@ import { use } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import DefaultAvatarIcon from '@/assets/svgs/default-avatar.svg?react'
-import UserIcon from '@/assets/svgs/user.svg?react'
 import { CurrentUserContext } from '@/context/current-user-context'
 import { Route as AccessTokenRoute } from '@/routes/(auth)/(app)/profile/access-token'
 import { Route as SecurityRoute } from '@/routes/(auth)/(app)/profile/security'
+
+import UserIcon from '@/assets/svgs/user.svg?react'
 
 export const Route = createFileRoute('/(auth)/(app)/profile')({
   component: Profile,
