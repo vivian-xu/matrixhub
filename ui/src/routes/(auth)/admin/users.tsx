@@ -17,7 +17,6 @@ export const Route = createFileRoute('/(auth)/admin/users')({
     await queryClient.ensureQueryData(usersQueryOptions(search))
   },
   component: RouteComponent,
-  // errorComponent: RouteErrorComponent,
 })
 
 export const Icon = AdminUsersIcon

@@ -8,6 +8,7 @@ import {
   getRouteApi,
   useRouterState,
 } from '@tanstack/react-router'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useRouteListState } from '@/shared/hooks/useRouteListState'
@@ -42,17 +43,17 @@ export function UsersPage() {
   })
   const loading = routeLoading || isFetching
 
-  const refreshUsers = () => queryClient.invalidateQueries({
+  const refreshUsers = useCallback(() => queryClient.invalidateQueries({
     queryKey: adminUserKeys.lists(),
-  })
+  }), [queryClient])
 
   const {
     rowSelection,
     setRowSelection,
     selectedCount,
-    handleSearchChange,
-    handleRefresh,
-    handlePageChange,
+    onSearchChange,
+    onRefresh,
+    onPageChange,
   } = useRouteListState({
     search,
     navigate,
@@ -84,13 +85,13 @@ export function UsersPage() {
       loading={loading}
       page={search.page ?? DEFAULT_USERS_PAGE}
       searchValue={search.query ?? ''}
-      onSearchChange={handleSearchChange}
-      onRefresh={handleRefresh}
+      onSearchChange={onSearchChange}
+      onRefresh={onRefresh}
       onDelete={handleDelete}
       onBatchDelete={handleBatchDelete}
       rowSelection={rowSelection}
       onRowSelectionChange={setRowSelection}
-      onPageChange={handlePageChange}
+      onPageChange={onPageChange}
       selectedCount={selectedCount}
       toolbarExtra={(
         <Button

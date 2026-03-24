@@ -123,28 +123,24 @@ export function UsersTable({
       accessorKey: 'username',
       header: t('routes.admin.users.table.username'),
       size: 180,
-      grow: false,
       Cell: UserNameCell,
     },
     {
       id: 'isAdmin',
       header: t('routes.admin.users.table.admin'),
       size: 180,
-      grow: false,
       Cell: UserAdminCell,
     },
     {
       id: 'source',
       header: t('routes.admin.users.table.source'),
       size: 180,
-      grow: false,
       Cell: UserSourceCell,
     },
     {
       id: 'createdAt',
       header: t('routes.admin.users.table.createdAt'),
       size: 180,
-      grow: false,
       accessorFn: row => formatDateTime(row.createdAt),
     },
     {

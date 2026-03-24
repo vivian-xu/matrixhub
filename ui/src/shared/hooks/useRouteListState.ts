@@ -30,7 +30,7 @@ const DEFAULT_PAGE = 1
 function defaultNormalizeQuery(value: string) {
   const nextQuery = value.trim()
 
-  return nextQuery || undefined
+  return nextQuery.length > 0 ? nextQuery : undefined
 }
 
 export function useRouteListState<TSearch extends RouteListSearchState, TRecord>({
@@ -61,10 +61,10 @@ export function useRouteListState<TSearch extends RouteListSearchState, TRecord>
   )
 
   const selectedCount = selectedRowIds.length
+  const currentQuery = normalizeQuery(search.query ?? '')
 
-  const handleSearchChange = useCallback((value: string) => {
+  const onSearchChange = useCallback((value: string) => {
     const nextQuery = normalizeQuery(value)
-    const currentQuery = search.query || undefined
 
     if (nextQuery === currentQuery) {
       return
@@ -79,14 +79,14 @@ export function useRouteListState<TSearch extends RouteListSearchState, TRecord>
         query: nextQuery,
       }),
     })
-  }, [clearRowSelection, defaultPage, navigate, normalizeQuery, search.query])
+  }, [clearRowSelection, currentQuery, defaultPage, navigate, normalizeQuery])
 
-  const handleRefresh = useCallback(() => {
+  const onRefresh = useCallback(() => {
     clearRowSelection()
     void refresh?.()
   }, [clearRowSelection, refresh])
 
-  const handlePageChange = useCallback((page: number) => {
+  const onPageChange = useCallback((page: number) => {
     if (page === (search.page ?? defaultPage)) {
       return
     }
@@ -108,8 +108,8 @@ export function useRouteListState<TSearch extends RouteListSearchState, TRecord>
     clearRowSelection,
     selectedCount,
     selectedRowIds,
-    handleSearchChange,
-    handleRefresh,
-    handlePageChange,
+    onSearchChange,
+    onRefresh,
+    onPageChange,
   }
 }
