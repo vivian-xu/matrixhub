@@ -1,4 +1,5 @@
 import { CurrentUser } from '@matrixhub/api-ts/v1alpha1/current_user.pb'
+import { ProjectRoleType } from '@matrixhub/api-ts/v1alpha1/role.pb'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { queryClient } from '@/queryClient'
@@ -25,7 +26,6 @@ export function projectRolesQueryOptions() {
 }
 
 // -- Custom hooks --
-
 export function useCurrentUser() {
   return useQuery(currentUserQueryOptions())
 }
@@ -39,4 +39,16 @@ export function invalidateAuthCache() {
   return queryClient.invalidateQueries({
     queryKey: authKeys.all,
   })
+}
+
+export function useProjectRole(projectId: string) {
+  const { data: projectRoles } = useProjectRoles()
+  const isAdmin = useCurrentUser().data?.isAdmin
+
+  if (isAdmin) {
+    // Admin has all permissions, including project admin role
+    return ProjectRoleType.ROLE_TYPE_PROJECT_ADMIN
+  }
+
+  return projectRoles?.projectRoles?.[projectId]
 }

@@ -1,5 +1,5 @@
 import { currentUserQueryOptions, projectRolesQueryOptions } from '@/features/auth/auth.query'
-import { projectQueryOptions } from '@/features/projects/projects.query'
+import { projectDetailQueryOptions } from '@/features/projects/projects.query'
 import { queryClient } from '@/queryClient'
 
 import type { ProjectRoleType } from '@matrixhub/api-ts/v1alpha1/role.pb'
@@ -77,7 +77,7 @@ export async function ensureProjectAccess(
 
   if (!role) {
     try {
-      await queryClient.ensureQueryData(projectQueryOptions(projectId))
+      await queryClient.ensureQueryData(projectDetailQueryOptions(projectId))
     } catch {
       throw notFoundError()
     }

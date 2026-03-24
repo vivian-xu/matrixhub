@@ -1,7 +1,7 @@
 import {
   Box, Group, Space, Tabs, Text,
 } from '@mantine/core'
-import { Projects } from '@matrixhub/api-ts/v1alpha1/project.pb'
+import { ProjectRoleType } from '@matrixhub/api-ts/v1alpha1/role.pb'
 import { IconApiApp as ProjectIcon } from '@tabler/icons-react'
 import {
   createFileRoute,
@@ -12,24 +12,14 @@ import {
 } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { notFoundError } from '@/utils/routerAccess'
+import { useProjectRole } from '@/features/auth/auth.query'
+import { projectDetailQueryOptions } from '@/features/projects/projects.query'
 
 export const Route = createFileRoute('/(auth)/(app)/projects/$projectId')({
-  loader: async ({ params: { projectId } }) => {
-    try {
-      const res = await Projects.GetProject({
-        name: projectId,
-      })
-
-      if (!res) {
-        throw notFoundError()
-      }
-
-      return { project: res }
-    } catch (error) {
-      console.error('Failed to load project data:', error)
-      throw notFoundError()
-    }
+  loader: async ({
+    context: { queryClient }, params: { projectId },
+  }) => {
+    await queryClient.ensureQueryData(projectDetailQueryOptions(projectId))
   },
   component: RouteComponent,
 })
@@ -59,9 +49,16 @@ function RouteComponent() {
   const navigate = useNavigate()
   const matchRoute = useMatchRoute()
   const pathname = useLocation({ select: s => s.pathname })
+  const currentRole = useProjectRole(projectId)
+
+  const isAllowEdit = currentRole && [ProjectRoleType.ROLE_TYPE_PROJECT_ADMIN].includes(currentRole)
+
+  const filteredTabRoutes = isAllowEdit
+    ? tabRoutes
+    : tabRoutes.filter(tab => tab.value !== 'settings')
 
   const activeTabRoute
-    = tabRoutes.find((tab) => {
+    = filteredTabRoutes.find((tab) => {
       return pathname && !!matchRoute({
         to: tab.to,
         params: { projectId },
@@ -69,7 +66,7 @@ function RouteComponent() {
         pending: true,
       })
     })
-    ?? tabRoutes[0]
+    ?? filteredTabRoutes[0]
   const activeTabLabel = t(`projects.detail.tabs.${activeTabRoute.value}`)
 
   return (
@@ -103,7 +100,7 @@ function RouteComponent() {
         }}
       >
         <Tabs.List style={{ gap: 'var(--mantine-spacing-md)' }}>
-          {tabRoutes.map((tab) => {
+          {filteredTabRoutes.map((tab) => {
             const isActive = tab.value === activeTabRoute.value
 
             return (

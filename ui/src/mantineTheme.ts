@@ -4,8 +4,7 @@ import {
   rem,
   Tabs,
 } from '@mantine/core'
-
-import type { CSSVariablesResolver } from '@mantine/core'
+import { InputWrapper, type CSSVariablesResolver } from '@mantine/core'
 
 export const mantineTheme = createTheme({
   primaryColor: 'cyan',
@@ -24,6 +23,11 @@ export const mantineTheme = createTheme({
         px: 'md',
         py: 'sm',
         bd: 'none',
+      },
+    }),
+    InputWrapper: InputWrapper.extend({
+      defaultProps: {
+        c: 'gray.7',
       },
     }),
   },

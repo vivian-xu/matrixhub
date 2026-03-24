@@ -1,22 +1,15 @@
 import { Projects } from '@matrixhub/api-ts/v1alpha1/project.pb'
-import { queryOptions, useQuery } from '@tanstack/react-query'
-
-// -- Query key factory --
+import { queryOptions } from '@tanstack/react-query'
 
 export const projectKeys = {
-  detail: (projectId: string) => ['projects', projectId] as const,
+  all: ['projects'] as const,
+  lists: () => [...projectKeys.all, 'list'] as const,
+  detail: (projectId: string) => [...projectKeys.all, 'detail', projectId] as const,
 }
 
-// -- Query options factory --
-
-export function projectQueryOptions(projectId: string) {
+export function projectDetailQueryOptions(projectId: string) {
   return queryOptions({
     queryKey: projectKeys.detail(projectId),
     queryFn: () => Projects.GetProject({ name: projectId }),
   })
-}
-
-// -- Custom hook --
-export function useProject(projectId: string) {
-  return useQuery(projectQueryOptions(projectId))
 }
