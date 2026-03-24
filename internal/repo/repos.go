@@ -23,6 +23,7 @@ import (
 	"github.com/matrixhub-ai/matrixhub/internal/domain/git"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/model"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/registry"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/config"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/db"
@@ -35,6 +36,7 @@ type Repos struct {
 	GitMirror  *mirror.Mirror
 	Project    project.IProjectRepo
 	User       user.IUserRepo
+	Registry   registry.IRegistryRepo
 	Model      model.IModelRepo
 	Label      model.ILabelRepo
 	Git        git.IGitRepo
@@ -62,6 +64,7 @@ func NewRepos(conf *config.Config, gitStorage *gitstorage.Storage, gitMirror *mi
 	repos.Label = NewLabelDB(repos.DB)
 	repos.Git = NewGitDB(repos.GitStorage, repos.GitMirror)
 	repos.Dataset = NewDatasetDB(repos.DB)
+	repos.Registry = NewRegistryRepo(repos.DB)
 
 	return repos
 }

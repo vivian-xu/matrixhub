@@ -21,7 +21,7 @@ import (
 
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/crypto"
-	"github.com/matrixhub-ai/matrixhub/internal/utils"
+	"github.com/matrixhub-ai/matrixhub/internal/infra/utils"
 )
 
 type UserRepo struct {
