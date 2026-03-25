@@ -45,9 +45,6 @@ export function ModelCreatePage({ initialProjectId = '' }: ModelCreatePageProps)
       name: '',
       projectId: initialProjectId?.trim(),
     },
-    validators: {
-      onChange: modelCreateSchema,
-    },
     onSubmit: async ({ value }) => {
       await createMutation.mutateAsync({
         name: value.name,
@@ -81,7 +78,10 @@ export function ModelCreatePage({ initialProjectId = '' }: ModelCreatePageProps)
         }}
       >
         <Stack gap="md">
-          <form.Field name="name">
+          <form.Field
+            name="name"
+            validators={{ onChange: modelCreateSchema.shape.name }}
+          >
             {field => (
               <TextInput
                 label={t('model.create.modelName')}
@@ -96,7 +96,10 @@ export function ModelCreatePage({ initialProjectId = '' }: ModelCreatePageProps)
             )}
           </form.Field>
 
-          <form.Field name="projectId">
+          <form.Field
+            name="projectId"
+            validators={{ onChange: modelCreateSchema.shape.projectId }}
+          >
             {(field) => {
               const selectedProjectOption = projects.find(option => option.name === field.state.value)
 
