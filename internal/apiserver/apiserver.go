@@ -45,6 +45,8 @@ import (
 	"github.com/matrixhub-ai/matrixhub/internal/apiserver/middleware"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/dataset"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/model"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/syncjob"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/syncpolicy"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/config"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/log"
@@ -191,7 +193,13 @@ func (server *APIServer) initGitHooks() {
 	}
 
 	mirrorRefFilterFunc := func(ctx context.Context, repoName string, remoteRefs []string) ([]string, error) {
-		return remoteRefs, nil
+		filteredRefs := []string{}
+		for _, ref := range remoteRefs {
+			if strings.HasPrefix(ref, "refs/heads/") || strings.HasPrefix(ref, "refs/tags/") {
+				filteredRefs = append(filteredRefs, ref)
+			}
+		}
+		return filteredRefs, nil
 	}
 
 	server.gitHooks.permissionHookFunc = permissionHookFunc
@@ -298,6 +306,22 @@ func (server *APIServer) initHandlersServicesRepos() {
 	)
 	userService := user.NewUserService(repos.Session, repos.User)
 
+	// init sync job service (required by sync policy service)
+	syncJobService := syncjob.NewSyncJobService(
+		repos.SyncJob,
+		repos.Registry,
+		repos.Project,
+		repos.Model,
+		repos.Git,
+	)
+
+	// init sync policy service
+	syncPolicyService := syncpolicy.NewSyncPolicyService(
+		repos.SyncPolicy,
+		repos.SyncTask,
+		syncJobService,
+	)
+
 	// init handlers
 	handlers := []handler.IHandler{
 		handler.NewLoginHandler(userService),
@@ -307,6 +331,7 @@ func (server *APIServer) initHandlersServicesRepos() {
 		handler.NewRegistryHandler(repos.Registry),
 		handler.NewDatasetHandler(datasetService),
 		handler.NewModelHandler(modelService),
+		handler.NewSyncPolicyHandler(syncPolicyService, repos.Registry),
 	}
 
 	server.repos = repos
