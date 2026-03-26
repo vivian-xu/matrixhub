@@ -352,7 +352,8 @@
             "name": "memberId",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "body",
@@ -377,7 +378,8 @@
           "$ref": "#/definitions/v1alpha1MemberType"
         },
         "memberId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32"
         },
         "role": {
           "$ref": "#/definitions/v1alpha1ProjectRoleType"
@@ -536,7 +538,8 @@
           "$ref": "#/definitions/v1alpha1MemberType"
         },
         "memberId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -604,7 +607,8 @@
       "type": "object",
       "properties": {
         "memberId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32"
         },
         "memberName": {
           "type": "string"

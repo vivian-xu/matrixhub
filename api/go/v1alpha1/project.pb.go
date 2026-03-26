@@ -862,7 +862,7 @@ func (x *ListProjectMembersResponse) GetPagination() *Pagination {
 
 type ProjectMember struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MemberId      string                 `protobuf:"bytes,1,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	MemberId      int32                  `protobuf:"varint,1,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	MemberName    string                 `protobuf:"bytes,2,opt,name=member_name,json=memberName,proto3" json:"member_name,omitempty"`
 	MemberType    MemberType             `protobuf:"varint,3,opt,name=member_type,json=memberType,proto3,enum=matrixhub.v1alpha1.MemberType" json:"member_type,omitempty"`
 	Role          ProjectRoleType        `protobuf:"varint,4,opt,name=role,proto3,enum=matrixhub.v1alpha1.ProjectRoleType" json:"role,omitempty"`
@@ -900,11 +900,11 @@ func (*ProjectMember) Descriptor() ([]byte, []int) {
 	return file_v1alpha1_project_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ProjectMember) GetMemberId() string {
+func (x *ProjectMember) GetMemberId() int32 {
 	if x != nil {
 		return x.MemberId
 	}
-	return ""
+	return 0
 }
 
 func (x *ProjectMember) GetMemberName() string {
@@ -932,7 +932,7 @@ type AddProjectMemberWithRoleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	MemberType    MemberType             `protobuf:"varint,2,opt,name=member_type,json=memberType,proto3,enum=matrixhub.v1alpha1.MemberType" json:"member_type,omitempty"`
-	MemberId      string                 `protobuf:"bytes,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	MemberId      int32                  `protobuf:"varint,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	Role          ProjectRoleType        `protobuf:"varint,4,opt,name=role,proto3,enum=matrixhub.v1alpha1.ProjectRoleType" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -982,11 +982,11 @@ func (x *AddProjectMemberWithRoleRequest) GetMemberType() MemberType {
 	return MemberType_MEMBER_TYPE_USER
 }
 
-func (x *AddProjectMemberWithRoleRequest) GetMemberId() string {
+func (x *AddProjectMemberWithRoleRequest) GetMemberId() int32 {
 	if x != nil {
 		return x.MemberId
 	}
-	return ""
+	return 0
 }
 
 func (x *AddProjectMemberWithRoleRequest) GetRole() ProjectRoleType {
@@ -1087,7 +1087,7 @@ func (x *RemoveProjectMembersRequest) GetMembers() []*MemberToRemove {
 type MemberToRemove struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MemberType    MemberType             `protobuf:"varint,1,opt,name=member_type,json=memberType,proto3,enum=matrixhub.v1alpha1.MemberType" json:"member_type,omitempty"`
-	MemberId      string                 `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	MemberId      int32                  `protobuf:"varint,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1129,11 +1129,11 @@ func (x *MemberToRemove) GetMemberType() MemberType {
 	return MemberType_MEMBER_TYPE_USER
 }
 
-func (x *MemberToRemove) GetMemberId() string {
+func (x *MemberToRemove) GetMemberId() int32 {
 	if x != nil {
 		return x.MemberId
 	}
-	return ""
+	return 0
 }
 
 type RemoveProjectMembersResponse struct {
@@ -1176,7 +1176,7 @@ type UpdateProjectMemberRoleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	MemberType    MemberType             `protobuf:"varint,2,opt,name=member_type,json=memberType,proto3,enum=matrixhub.v1alpha1.MemberType" json:"member_type,omitempty"`
-	MemberId      string                 `protobuf:"bytes,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	MemberId      int32                  `protobuf:"varint,3,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
 	Role          ProjectRoleType        `protobuf:"varint,4,opt,name=role,proto3,enum=matrixhub.v1alpha1.ProjectRoleType" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1226,11 +1226,11 @@ func (x *UpdateProjectMemberRoleRequest) GetMemberType() MemberType {
 	return MemberType_MEMBER_TYPE_USER
 }
 
-func (x *UpdateProjectMemberRoleRequest) GetMemberId() string {
+func (x *UpdateProjectMemberRoleRequest) GetMemberId() int32 {
 	if x != nil {
 		return x.MemberId
 	}
-	return ""
+	return 0
 }
 
 func (x *UpdateProjectMemberRoleRequest) GetRole() ProjectRoleType {
@@ -1339,7 +1339,7 @@ const file_v1alpha1_project_proto_rawDesc = "" +
 	"pagination\x18\x02 \x01(\v2\x1e.matrixhub.v1alpha1.PaginationR\n" +
 	"pagination\"\xc7\x01\n" +
 	"\rProjectMember\x12\x1b\n" +
-	"\tmember_id\x18\x01 \x01(\tR\bmemberId\x12\x1f\n" +
+	"\tmember_id\x18\x01 \x01(\x05R\bmemberId\x12\x1f\n" +
 	"\vmember_name\x18\x02 \x01(\tR\n" +
 	"memberName\x12?\n" +
 	"\vmember_type\x18\x03 \x01(\x0e2\x1e.matrixhub.v1alpha1.MemberTypeR\n" +
@@ -1349,7 +1349,7 @@ const file_v1alpha1_project_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12I\n" +
 	"\vmember_type\x18\x02 \x01(\x0e2\x1e.matrixhub.v1alpha1.MemberTypeB\b\xfaB\x05\x82\x01\x02\x10\x01R\n" +
 	"memberType\x12$\n" +
-	"\tmember_id\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bmemberId\x12A\n" +
+	"\tmember_id\x18\x03 \x01(\x05B\a\xfaB\x04\x1a\x02 \x00R\bmemberId\x12A\n" +
 	"\x04role\x18\x04 \x01(\x0e2#.matrixhub.v1alpha1.ProjectRoleTypeB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04role\"\"\n" +
 	" AddProjectMemberWithRoleResponse\"x\n" +
 	"\x1bRemoveProjectMembersRequest\x12\x1b\n" +
@@ -1358,13 +1358,13 @@ const file_v1alpha1_project_proto_rawDesc = "" +
 	"\x0eMemberToRemove\x12I\n" +
 	"\vmember_type\x18\x01 \x01(\x0e2\x1e.matrixhub.v1alpha1.MemberTypeB\b\xfaB\x05\x82\x01\x02\x10\x01R\n" +
 	"memberType\x12$\n" +
-	"\tmember_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bmemberId\"\x1e\n" +
+	"\tmember_id\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02 \x00R\bmemberId\"\x1e\n" +
 	"\x1cRemoveProjectMembersResponse\"\xf1\x01\n" +
 	"\x1eUpdateProjectMemberRoleRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12I\n" +
 	"\vmember_type\x18\x02 \x01(\x0e2\x1e.matrixhub.v1alpha1.MemberTypeB\b\xfaB\x05\x82\x01\x02\x10\x01R\n" +
 	"memberType\x12$\n" +
-	"\tmember_id\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bmemberId\x12A\n" +
+	"\tmember_id\x18\x03 \x01(\x05B\a\xfaB\x04\x1a\x02 \x00R\bmemberId\x12A\n" +
 	"\x04role\x18\x04 \x01(\x0e2#.matrixhub.v1alpha1.ProjectRoleTypeB\b\xfaB\x05\x82\x01\x02\x10\x01R\x04role\"!\n" +
 	"\x1fUpdateProjectMemberRoleResponse*^\n" +
 	"\vProjectType\x12\x1c\n" +

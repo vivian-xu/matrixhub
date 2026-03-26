@@ -5,7 +5,6 @@ ARG BASE_IMAGE_PREFIX=docker.io
 ARG GOPROXY
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
-
 ARG LD_FLAGS
 ARG NODE_IMAGE_VERSION=22
 
@@ -39,6 +38,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 ##########################################
 FROM ${BASE_IMAGE_PREFIX}/node:${NODE_IMAGE_VERSION} AS ui
+ENV CI=true
 WORKDIR /app/ui
 COPY ui /app/ui/
 COPY api /app/api/

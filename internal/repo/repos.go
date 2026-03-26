@@ -19,6 +19,7 @@ import (
 	gitstorage "github.com/matrixhub-ai/hfd/pkg/storage"
 	"gorm.io/gorm"
 
+	"github.com/matrixhub-ai/matrixhub/internal/domain/authz"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/dataset"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/git"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/model"
@@ -48,6 +49,7 @@ type Repos struct {
 	SyncPolicy  syncpolicy.ISyncPolicyRepo
 	SyncTask    syncpolicy.ISyncTaskRepo
 	SyncJob     syncjob.ISyncJobRepo
+	Authz       authz.IAuthzProjectRepo
 }
 
 func NewRepos(conf *config.Config, gitStorage *gitstorage.Storage, gitMirror *mirror.Mirror) *Repos {
@@ -75,6 +77,7 @@ func NewRepos(conf *config.Config, gitStorage *gitstorage.Storage, gitMirror *mi
 	repos.SyncPolicy = NewSyncPolicyDB(repos.DB)
 	repos.SyncTask = NewSyncTaskDB(repos.DB)
 	repos.SyncJob = NewSyncJobDB(repos.DB)
+	repos.Authz = NewAuthzDBRepo(repos.DB)
 
 	return repos
 }

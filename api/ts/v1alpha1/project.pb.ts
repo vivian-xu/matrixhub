@@ -95,7 +95,7 @@ export type ListProjectMembersResponse = {
 }
 
 export type ProjectMember = {
-  memberId?: string
+  memberId?: number
   memberName?: string
   memberType?: MemberType
   role?: MatrixhubV1alpha1Role.ProjectRoleType
@@ -104,7 +104,7 @@ export type ProjectMember = {
 export type AddProjectMemberWithRoleRequest = {
   name?: string
   memberType?: MemberType
-  memberId?: string
+  memberId?: number
   role?: MatrixhubV1alpha1Role.ProjectRoleType
 }
 
@@ -118,7 +118,7 @@ export type RemoveProjectMembersRequest = {
 
 export type MemberToRemove = {
   memberType?: MemberType
-  memberId?: string
+  memberId?: number
 }
 
 export type RemoveProjectMembersResponse = {
@@ -127,7 +127,7 @@ export type RemoveProjectMembersResponse = {
 export type UpdateProjectMemberRoleRequest = {
   name?: string
   memberType?: MemberType
-  memberId?: string
+  memberId?: number
   role?: MatrixhubV1alpha1Role.ProjectRoleType
 }
 

@@ -332,7 +332,7 @@ DatasetsApiService
      * @param "Revision" (optional.String) - 
      * @param "Path" (optional.String) - 
 
-@return V1alpha1GetDatasetBlobResponse
+@return V1alpha1File
 */
 
 type DatasetsApiDatasetsGetDatasetBlobOpts struct { 
@@ -340,13 +340,13 @@ type DatasetsApiDatasetsGetDatasetBlobOpts struct {
 	Path optional.String
 }
 
-func (a *DatasetsApiService) DatasetsGetDatasetBlob(ctx context.Context, project string, name string, localVarOptionals *DatasetsApiDatasetsGetDatasetBlobOpts) (V1alpha1GetDatasetBlobResponse, *http.Response, error) {
+func (a *DatasetsApiService) DatasetsGetDatasetBlob(ctx context.Context, project string, name string, localVarOptionals *DatasetsApiDatasetsGetDatasetBlobOpts) (V1alpha1File, *http.Response, error) {
 	var (
 		localVarHttpMethod = strings.ToUpper("Get")
 		localVarPostBody   interface{}
 		localVarFileName   string
 		localVarFileBytes  []byte
-		localVarReturnValue V1alpha1GetDatasetBlobResponse
+		localVarReturnValue V1alpha1File
 	)
 
 	// create path and map variables
@@ -410,7 +410,7 @@ func (a *DatasetsApiService) DatasetsGetDatasetBlob(ctx context.Context, project
 		}
 		
 		if localVarHttpResponse.StatusCode == 200 {
-			var v V1alpha1GetDatasetBlobResponse
+			var v V1alpha1File
 			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"));
 				if err != nil {
 					newErr.error = err.Error()

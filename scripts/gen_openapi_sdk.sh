@@ -28,7 +28,7 @@ function gen_openapi_sdk() {
                 docker run --rm -u "$(id -u):$(id -g)" \
                     -v "$swagger_path/$version":/swagger \
                     -v "$target":/gen \
-                    docker.m.daocloud.io/swaggerapi/swagger-codegen-cli generate \
+                    docker.io/swaggerapi/swagger-codegen-cli generate \
                     -i /swagger/"$file" \
                     -l go \
                     -o /gen \

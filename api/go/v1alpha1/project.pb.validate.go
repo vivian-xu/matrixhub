@@ -1843,10 +1843,10 @@ func (m *AddProjectMemberWithRoleRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetMemberId()) < 1 {
+	if m.GetMemberId() <= 0 {
 		err := AddProjectMemberWithRoleRequestValidationError{
 			field:  "MemberId",
-			reason: "value length must be at least 1 runes",
+			reason: "value must be greater than 0",
 		}
 		if !all {
 			return err
@@ -2232,10 +2232,10 @@ func (m *MemberToRemove) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetMemberId()) < 1 {
+	if m.GetMemberId() <= 0 {
 		err := MemberToRemoveValidationError{
 			field:  "MemberId",
-			reason: "value length must be at least 1 runes",
+			reason: "value must be greater than 0",
 		}
 		if !all {
 			return err
@@ -2468,10 +2468,10 @@ func (m *UpdateProjectMemberRoleRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetMemberId()) < 1 {
+	if m.GetMemberId() <= 0 {
 		err := UpdateProjectMemberRoleRequestValidationError{
 			field:  "MemberId",
-			reason: "value length must be at least 1 runes",
+			reason: "value must be greater than 0",
 		}
 		if !all {
 			return err

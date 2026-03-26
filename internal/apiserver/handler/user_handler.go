@@ -16,7 +16,6 @@ package handler
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/samber/lo"
 	"google.golang.org/grpc/codes"
@@ -25,14 +24,12 @@ import (
 
 	userv1alpha1 "github.com/matrixhub-ai/matrixhub/api/go/v1alpha1"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/authz"
-	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/log"
 )
 
 type UserHandler struct {
 	userRepo     user.IUserRepo
-	projectRepo  project.IProjectRepo
 	authzService authz.IAuthzService
 }
 
@@ -45,8 +42,8 @@ func (u *UserHandler) SetUserSysAdmin(ctx context.Context, request *userv1alpha1
 		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
-	userID := strconv.Itoa(int(request.Id))
-	if err := u.projectRepo.SetUserSysAdmin(ctx, userID, request.SysadminFlag); err != nil {
+	userID := int(request.Id)
+	if err := u.userRepo.SetUserSysAdmin(ctx, userID, request.SysadminFlag); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -141,10 +138,9 @@ func (u *UserHandler) RegisterToServer(options *ServerOptions) {
 	}
 }
 
-func NewUserHandler(userRepo user.IUserRepo, projectRepo project.IProjectRepo, authzService authz.IAuthzService) IHandler {
+func NewUserHandler(userRepo user.IUserRepo, authzService authz.IAuthzService) IHandler {
 	handler := &UserHandler{
 		userRepo:     userRepo,
-		projectRepo:  projectRepo,
 		authzService: authzService,
 	}
 

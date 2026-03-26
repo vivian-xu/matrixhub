@@ -46,7 +46,7 @@ export function AddMemberModal({
       await mutation.mutateAsync({
         name: projectId,
         memberType: value.memberType as MemberType,
-        memberId: value.memberId,
+        memberId: Number(value.memberId),
         role: value.role as ProjectRoleType,
       })
       handleClose()

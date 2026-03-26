@@ -27,7 +27,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/matrixhub-ai/matrixhub/api/go/v1alpha1"
-	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/role"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/log"
@@ -37,7 +36,6 @@ import (
 type CurrentUserHandler struct {
 	userRepo        user.IUserRepo
 	accessTokenRepo user.IAccessTokenRepo
-	projectRepo     project.IProjectRepo
 }
 
 func (cu *CurrentUserHandler) GetCurrentUser(ctx context.Context, request *v1alpha1.GetCurrentUserRequest) (*v1alpha1.GetCurrentUserResponse, error) {
@@ -153,8 +151,8 @@ func (cu *CurrentUserHandler) DeleteAccessToken(ctx context.Context, request *v1
 }
 
 func (cu *CurrentUserHandler) GetProjectRoles(ctx context.Context, request *v1alpha1.GetProjectRolesRequest) (*v1alpha1.GetProjectRolesResponse, error) {
-	userID := strconv.Itoa(user.GetCurrentUserId(ctx))
-	projectRoles, err := cu.projectRepo.GetUserAllProjectRoles(ctx, userID)
+	userID := user.GetCurrentUserId(ctx)
+	projectRoles, err := cu.userRepo.GetUserAllProjectRoles(ctx, userID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -177,11 +175,10 @@ func (cu *CurrentUserHandler) RegisterToServer(options *ServerOptions) {
 	}
 }
 
-func NewCurrentUserHandler(userRepo user.IUserRepo, akRepo user.IAccessTokenRepo, projectRepo project.IProjectRepo) IHandler {
+func NewCurrentUserHandler(userRepo user.IUserRepo, akRepo user.IAccessTokenRepo) IHandler {
 	handler := &CurrentUserHandler{
 		userRepo:        userRepo,
 		accessTokenRepo: akRepo,
-		projectRepo:     projectRepo,
 	}
 	return handler
 }

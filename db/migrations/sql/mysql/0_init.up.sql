@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `roles`
 CREATE TABLE IF NOT EXISTS `members_roles_projects`
 (
     `id`          int         NOT NULL AUTO_INCREMENT,
-    `member_id`   varchar(64) NOT NULL,
+    `member_id`   int         NOT NULL,
     `member_type` varchar(64) NOT NULL,
     `role_id`     int                  DEFAULT NULL,
     `project_id`  int                  DEFAULT NULL,
@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS `members_roles_projects`
     `updated_at`  timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     INDEX `project_id_index` (`project_id`),
+    INDEX `member_id_index` (`member_id`),
     UNIQUE KEY `composite_index` (`member_id`, `member_type`, `role_id`, `project_id`),
     CONSTRAINT `fk_members_roles_projects_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_members_roles_projects_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE
@@ -213,9 +214,9 @@ CREATE TABLE IF NOT EXISTS `sync_jobs`
 
 INSERT INTO `roles` (`id`, `name`, `permissions`, `scope`)
 VALUES (1, 'platform_admin', '["*.*"]', 'platform'),
-       (2, 'project_admin', '["project.read","project.create","project.update","project.delete","member.read","member.add","member.remove","member.role_update","model.*","dataset.*"]', 'project'),
-       (3, 'project_editor', '["project.read","project.create","member.read","model.read","model.pull","model.push","dataset.read","dataset.pull","dataset.push"]', 'project'),
-       (4, 'project_viewer', '["project.read","project.create","member.read","model.read","model.pull","dataset.read","dataset.pull"]', 'project');
+       (2, 'project_admin', '["project.get","project.create","project.update","project.delete","member.get","member.add","member.remove","member.role_update","model.*","dataset.*"]', 'project'),
+       (3, 'project_editor', '["project.get","project.create","member.get","model.get","model.pull","model.push","dataset.get","dataset.pull","dataset.push"]', 'project'),
+       (4, 'project_viewer', '["project.get","project.create","member.get","model.get","model.pull","dataset.get","dataset.pull"]', 'project');
 
 CREATE TABLE IF NOT EXISTS sessions (
     token CHAR(43) COLLATE utf8mb4_bin PRIMARY KEY,
@@ -224,9 +225,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     INDEX sessions_expiry_idx (expiry)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-INSERT INTO `users` (`username`, `password`, `email`, `created_at`, `updated_at`)
+INSERT INTO `users` (`username`, `password`, `email`)
 VALUES
-    ('admin', '$2a$10$GD9CROEWOuDcfGRbF3vB7e2bVplplnNW35uc03mju/Lm3ACEIylde', '', '2026-03-15 02:56:55', '2026-03-15 02:56:55');
+    ('admin', '$2a$10$GD9CROEWOuDcfGRbF3vB7e2bVplplnNW35uc03mju/Lm3ACEIylde', '');
 
 INSERT INTO `members_roles_projects` (`member_id`, `member_type`, `role_id`, `project_id`)
 VALUES

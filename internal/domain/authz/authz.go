@@ -74,26 +74,26 @@ func MatchPermissions(userPerms []Permission, required Permission) bool {
 // Platform-level permissions
 const (
 	// User management
-	UserRead          Permission = "user.read"           // View platform user list
+	UserGet           Permission = "user.get"            // View platform user list
 	UserCreate        Permission = "user.create"         // Create platform user
 	UserDelete        Permission = "user.delete"         // Delete platform user
 	UserResetPassword Permission = "user.reset_password" // Reset user password
 	UserAuthorize     Permission = "user.authorize"      // Authorize user (e.g., set as sysadmin)
 
 	// Registry management
-	RegistryRead   Permission = "registry.read"   // View registry list
+	RegistryGet    Permission = "registry.get"    // View registry list
 	RegistryCreate Permission = "registry.create" // Create registry
 	RegistryUpdate Permission = "registry.update" // Update registry
 	RegistryDelete Permission = "registry.delete" // Delete registry
 
 	// Sync policy management
-	SyncRead   Permission = "sync.read"   // View sync policies
+	SyncGet    Permission = "sync.get"    // View sync policies
 	SyncCreate Permission = "sync.create" // Create sync policy
 	SyncUpdate Permission = "sync.update" // Update sync policy
 	SyncDelete Permission = "sync.delete" // Delete sync policy
 
 	// Access key management
-	AccessKeyRead   Permission = "access_key.read"   // View access keys
+	AccessKeyGet    Permission = "access_key.get"    // View access keys
 	AccessKeyCreate Permission = "access_key.create" // Create access key
 	AccessKeyDelete Permission = "access_key.delete" // Delete access key
 )
@@ -101,25 +101,25 @@ const (
 // Project-level permissions
 const (
 	// Project member permissions
-	MemberRead       Permission = "member.read"        // View project members
+	MemberGet        Permission = "member.get"         // View project members
 	MemberAdd        Permission = "member.add"         // Add project member
 	MemberRemove     Permission = "member.remove"      // Remove project member
 	MemberRoleUpdate Permission = "member.role_update" // Update member role
 
 	// Project permissions
-	ProjectRead   Permission = "project.read"   // View project
+	ProjectGet    Permission = "project.get"    // View project
 	ProjectCreate Permission = "project.create" // Create project
 	ProjectUpdate Permission = "project.update" // Update project
 	ProjectDelete Permission = "project.delete" // Delete project
 
 	// Model permissions
-	ModelRead   Permission = "model.read"   // View model list
+	ModelGet    Permission = "model.get"    // View model list
 	ModelPull   Permission = "model.pull"   // Pull model
 	ModelPush   Permission = "model.push"   // Push model
 	ModelDelete Permission = "model.delete" // Delete model
 
 	// Dataset permissions
-	DatasetRead   Permission = "dataset.read"   // View dataset list
+	DatasetGet    Permission = "dataset.get"    // View dataset list
 	DatasetPull   Permission = "dataset.pull"   // Pull dataset
 	DatasetPush   Permission = "dataset.push"   // Push dataset
 	DatasetDelete Permission = "dataset.delete" // Delete dataset

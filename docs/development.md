@@ -170,3 +170,12 @@ rm -rf node_modules pnpm-lock.yaml
 pnpm install
 ```
 
+### Generate HTTP Client SDK
+
+When swagger API definitions change, regenerate the HTTP client SDK for testing:
+
+```bash
+make gen_openapi_sdk
+```
+
+Output: `test/client` directory.

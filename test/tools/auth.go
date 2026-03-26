@@ -144,7 +144,7 @@ func LoginUser(username, password string) (string, error) {
 	loginApi := v1alpha1login.NewAPIClient(cfg).LoginApi
 
 	ctx := context.Background()
-	resp, httpResponse, err := loginApi.LoginLogin(ctx, v1alpha1login.V1alpha1LoginRequest{
+	_, httpResponse, err := loginApi.LoginLogin(ctx, v1alpha1login.V1alpha1LoginRequest{
 		Username: username,
 		Password: password,
 	})
@@ -159,15 +159,6 @@ func LoginUser(username, password string) (string, error) {
 		if setCookie != "" {
 			// Extract only the name=value part (before the first semicolon)
 			cookie := extractCookieValue(setCookie)
-			if cookie != "" {
-				log.Printf("User %s logged in successfully\n", username)
-				return cookie, nil
-			}
-		}
-
-		// Fallback to the cookie field in response body
-		if resp.Cookie != "" {
-			cookie := extractCookieValue(resp.Cookie)
 			if cookie != "" {
 				log.Printf("User %s logged in successfully\n", username)
 				return cookie, nil
@@ -262,18 +253,18 @@ func GetUserIDByUsername(username string) (int64, error) {
 }
 
 // CreateUserAndLoginWithID creates a user, logs in, and returns (userID, cookie, error)
-func CreateUserAndLoginWithID(username, password string, isAdmin bool) (string, string, error) {
+func CreateUserAndLoginWithID(username, password string, isAdmin bool) (int32, string, error) {
 	cookie, err := CreateUserAndLogin(username, password, isAdmin)
 	if err != nil {
-		return "", "", err
+		return 0, "", err
 	}
 
 	userID, err := GetUserIDByUsername(username)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get user ID for %s: %w", username, err)
+		return 0, "", fmt.Errorf("failed to get user ID for %s: %w", username, err)
 	}
 
-	return fmt.Sprintf("%d", userID), cookie, nil
+	return int32(userID), cookie, nil
 }
 
 // DeleteUser deletes a user by ID using admin privileges

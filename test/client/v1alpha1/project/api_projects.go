@@ -870,7 +870,7 @@ ProjectsApiService
 
 @return V1alpha1UpdateProjectMemberRoleResponse
 */
-func (a *ProjectsApiService) ProjectsUpdateProjectMemberRole(ctx context.Context, name string, memberId string, body ProjectsUpdateProjectMemberRoleBody) (V1alpha1UpdateProjectMemberRoleResponse, *http.Response, error) {
+func (a *ProjectsApiService) ProjectsUpdateProjectMemberRole(ctx context.Context, name string, memberId int32, body ProjectsUpdateProjectMemberRoleBody) (V1alpha1UpdateProjectMemberRoleResponse, *http.Response, error) {
 	var (
 		localVarHttpMethod = strings.ToUpper("Put")
 		localVarPostBody   interface{}

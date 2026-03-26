@@ -11,6 +11,6 @@ package v1alpha1
 
 type ProjectsAddProjectMemberWithRoleBody struct {
 	MemberType *V1alpha1MemberType `json:"memberType,omitempty"`
-	MemberId string `json:"memberId,omitempty"`
+	MemberId int32 `json:"memberId,omitempty"`
 	Role *V1alpha1ProjectRoleType `json:"role,omitempty"`
 }

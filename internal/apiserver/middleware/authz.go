@@ -16,291 +16,126 @@ package middleware
 
 import (
 	"context"
-	"net/http"
-	"regexp"
-	"strings"
 
-	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/matrixhub-ai/matrixhub/internal/domain/authz"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 )
 
-// GinAuthn is a Gin middleware that loads the session and injects user ID into the request context.
-// It must run before Authz so that VerifyPlatformPermission can find the user ID.
-func GinAuthn(sessionRepo user.ISessionRepo) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		sessionCookie := sessionRepo.GetSessionCookie()
-		cookie, err := c.Request.Cookie(sessionCookie.Name)
-		if err != nil || cookie.Value == "" {
-			c.Next()
-			return
+var publicAuthzMethods = map[string]bool{
+	// Login/Logout
+	"/matrixhub.v1alpha1.Login/Login":  true,
+	"/matrixhub.v1alpha1.Login/Logout": true,
+
+	// Current user
+	"/matrixhub.v1alpha1.CurrentUser/GetCurrentUser":    true,
+	"/matrixhub.v1alpha1.CurrentUser/ResetPassword":     true,
+	"/matrixhub.v1alpha1.CurrentUser/ListAccessTokens":  true,
+	"/matrixhub.v1alpha1.CurrentUser/CreateAccessToken": true,
+	"/matrixhub.v1alpha1.CurrentUser/DeleteAccessToken": true,
+	"/matrixhub.v1alpha1.CurrentUser/GetProjectRoles":   true,
+
+	// Projects
+	"/matrixhub.v1alpha1.Projects/CreateProject":            true,
+	"/matrixhub.v1alpha1.Projects/ListProjects":             true,
+	"/matrixhub.v1alpha1.Projects/GetProject":               true,
+	"/matrixhub.v1alpha1.Projects/UpdateProject":            true,
+	"/matrixhub.v1alpha1.Projects/DeleteProject":            true,
+	"/matrixhub.v1alpha1.Projects/ListProjectMembers":       true,
+	"/matrixhub.v1alpha1.Projects/AddProjectMemberWithRole": true,
+	"/matrixhub.v1alpha1.Projects/RemoveProjectMembers":     true,
+	"/matrixhub.v1alpha1.Projects/UpdateProjectMemberRole":  true,
+
+	// Models
+	"/matrixhub.v1alpha1.Models/ListModels":           true,
+	"/matrixhub.v1alpha1.Models/GetModel":             true,
+	"/matrixhub.v1alpha1.Models/CreateModel":          true,
+	"/matrixhub.v1alpha1.Models/DeleteModel":          true,
+	"/matrixhub.v1alpha1.Models/ListModelRevisions":   true,
+	"/matrixhub.v1alpha1.Models/GetModelTree":         true,
+	"/matrixhub.v1alpha1.Models/GetModelBlob":         true,
+	"/matrixhub.v1alpha1.Models/ListModelCommits":     true,
+	"/matrixhub.v1alpha1.Models/GetModelCommit":       true,
+	"/matrixhub.v1alpha1.Models/GetModelCommitByHash": true,
+	"/matrixhub.v1alpha1.Models/ListModelFrameLabels": true,
+	"/matrixhub.v1alpha1.Models/ListModelTaskLabels":  true,
+
+	// Datasets
+	"/matrixhub.v1alpha1.Datasets/ListDatasets":          true,
+	"/matrixhub.v1alpha1.Datasets/GetDataset":            true,
+	"/matrixhub.v1alpha1.Datasets/CreateDataset":         true,
+	"/matrixhub.v1alpha1.Datasets/DeleteDataset":         true,
+	"/matrixhub.v1alpha1.Datasets/ListDatasetRevisions":  true,
+	"/matrixhub.v1alpha1.Datasets/GetDatasetTree":        true,
+	"/matrixhub.v1alpha1.Datasets/GetDatasetBlob":        true,
+	"/matrixhub.v1alpha1.Datasets/ListDatasetCommits":    true,
+	"/matrixhub.v1alpha1.Datasets/GetDatasetCommit":      true,
+	"/matrixhub.v1alpha1.Datasets/ListDatasetTaskLabels": true,
+}
+
+// methodPermissions maps GRPC methods to required permissions
+var methodPermissions = map[string]authz.Permission{
+	// User management
+	"/matrixhub.v1alpha1.Users/ListUsers":         authz.UserGet,
+	"/matrixhub.v1alpha1.Users/GetUser":           authz.UserGet,
+	"/matrixhub.v1alpha1.Users/CreateUser":        authz.UserCreate,
+	"/matrixhub.v1alpha1.Users/SetUserSysAdmin":   authz.UserAuthorize,
+	"/matrixhub.v1alpha1.Users/DeleteUser":        authz.UserDelete,
+	"/matrixhub.v1alpha1.Users/ResetUserPassword": authz.UserResetPassword,
+
+	// Registry management
+	"/matrixhub.v1alpha1.Registries/ListRegistries": authz.RegistryGet,
+	"/matrixhub.v1alpha1.Registries/GetRegistry":    authz.RegistryGet,
+	"/matrixhub.v1alpha1.Registries/PingRegistry":   authz.RegistryGet,
+	"/matrixhub.v1alpha1.Registries/CreateRegistry": authz.RegistryCreate,
+	"/matrixhub.v1alpha1.Registries/UpdateRegistry": authz.RegistryUpdate,
+	"/matrixhub.v1alpha1.Registries/DeleteRegistry": authz.RegistryDelete,
+
+	// Sync policy management
+	"/matrixhub.v1alpha1.SyncPolicy/ListSyncPolicies": authz.SyncGet,
+	"/matrixhub.v1alpha1.SyncPolicy/GetSyncPolicy":    authz.SyncGet,
+	"/matrixhub.v1alpha1.SyncPolicy/ListSyncTasks":    authz.SyncGet,
+	"/matrixhub.v1alpha1.SyncPolicy/CreateSyncPolicy": authz.SyncCreate,
+	"/matrixhub.v1alpha1.SyncPolicy/CreateSyncTask":   authz.SyncCreate,
+	"/matrixhub.v1alpha1.SyncPolicy/UpdateSyncPolicy": authz.SyncUpdate,
+	"/matrixhub.v1alpha1.SyncPolicy/StopSyncTask":     authz.SyncUpdate,
+	"/matrixhub.v1alpha1.SyncPolicy/DeleteSyncPolicy": authz.SyncDelete,
+}
+
+// AuthzInterceptor returns a GRPC interceptor that checks platform-level permissions
+func AuthzInterceptor(verifyFunc func(ctx context.Context, perm authz.Permission) (bool, error)) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+
+		// Public methods don't need authz check
+		if publicAuthzMethods[info.FullMethod] {
+			return handler(ctx, req)
 		}
 
-		ctx, err := sessionRepo.Load(c.Request.Context(), cookie.Value)
+		// Check if user is authenticated
+		userID := ctx.Value(user.UserIdCtxKey)
+		if userID == nil {
+			return nil, status.Error(codes.Unauthenticated, codes.Unauthenticated.String())
+		}
+
+		// Get required permission for the method
+		requiredPerm, ok := methodPermissions[info.FullMethod]
+		if !ok {
+			// No permission configured, allow by default (may be unregistered new API)
+			return handler(ctx, req)
+		}
+
+		// Verify permission
+		allowed, err := verifyFunc(ctx, requiredPerm)
 		if err != nil {
-			c.Next()
-			return
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		if !allowed {
+			return nil, status.Error(codes.PermissionDenied, "permission denied")
 		}
 
-		if !sessionRepo.Exists(ctx, user.UserIdCtxKey.String()) {
-			c.Next()
-			return
-		}
-
-		userID := sessionRepo.GetInt(ctx, user.UserIdCtxKey.String())
-		ctx = context.WithValue(ctx, user.UserIdCtxKey, userID)
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	}
-}
-
-var (
-	publicPaths = map[string]methods{
-		"/healthz": {"GET"},
-
-		// Login/Logout
-		"/api/v1alpha1/login":  {"POST"},
-		"/api/v1alpha1/logout": {"POST"},
-
-		// Current user (operating own data, no platform permission needed)
-		"/api/v1alpha1/current-user":                  {"GET"},
-		"/api/v1alpha1/current-user/reset-password":   {"POST"},
-		"/api/v1alpha1/current-user/access-tokens":    {"GET"},
-		"/apis/v1alpha1/current-user/access-tokens":   {"POST"},
-		"/apis/v1alpha1/current-user/access-tokens/*": {"DELETE"},
-		"/api/v1alpha1/current-user/projects/role":    {"GET"},
-
-		// Project management (project-level permission handled in Handler)
-		"/api/v1alpha1/projects":                  {"GET", "POST"},
-		"/api/v1alpha1/projects/*":                {"GET", "PUT", "DELETE"},
-		"/api/v1alpha1/projects/*/members":        {"GET", "POST", "DELETE"},
-		"/api/v1alpha1/projects/*/members/*/role": {"PUT"},
-
-		// Models (project-level permission handled in Handler)
-		"/api/v1alpha1/models":                {"GET", "POST"},
-		"/api/v1alpha1/models/task-labels":    {"GET"},
-		"/api/v1alpha1/models/library-labels": {"GET"},
-		"/api/v1alpha1/models/*/*":            {"GET", "DELETE"},
-		"/api/v1alpha1/models/*/*/revisions":  {"GET"},
-		"/api/v1alpha1/models/*/*/commits":    {"GET"},
-		"/api/v1alpha1/models/*/*/commits/*":  {"GET"},
-		"/api/v1alpha1/models/*/*/tree":       {"GET"},
-		"/api/v1alpha1/models/*/*/blob":       {"GET"},
-
-		// Datasets (project-level permission handled in Handler)
-		"/api/v1alpha1/datasets":               {"GET", "POST"},
-		"/api/v1alpha1/datasets/task-labels":   {"GET"},
-		"/api/v1alpha1/datasets/*/*":           {"GET", "DELETE"},
-		"/api/v1alpha1/datasets/*/*/revisions": {"GET"},
-		"/api/v1alpha1/datasets/*/*/commits":   {"GET"},
-		"/api/v1alpha1/datasets/*/*/commits/*": {"GET"},
-		"/api/v1alpha1/datasets/*/*/tree":      {"GET"},
-		"/api/v1alpha1/datasets/*/*/blob":      {"GET"},
-	}
-
-	permissionPaths = map[string]map[string]methods{
-		// User management
-		authz.UserRead.String(): {
-			"/api/v1alpha1/users":   {"GET"},
-			"/api/v1alpha1/users/*": {"GET"},
-		},
-		authz.UserCreate.String(): {
-			"/api/v1alpha1/users":             {"POST"},
-			"/apis/v1alpha1/users/*/sysadmin": {"PUT"},
-		},
-		authz.UserDelete.String(): {
-			"/api/v1alpha1/users/*": {"DELETE"},
-		},
-		authz.UserResetPassword.String(): {
-			"/api/v1alpha1/users/*/reset-password": {"POST"},
-		},
-
-		// Registry management
-		authz.RegistryRead.String(): {
-			"/api/v1alpha1/registries":      {"GET"},
-			"/api/v1alpha1/registries/*":    {"GET"},
-			"/api/v1alpha1/registries/ping": {"POST"},
-		},
-		authz.RegistryCreate.String(): {
-			"/api/v1alpha1/registries": {"POST"},
-		},
-		authz.RegistryUpdate.String(): {
-			"/api/v1alpha1/registries/*": {"PUT"},
-		},
-		authz.RegistryDelete.String(): {
-			"/api/v1alpha1/registries/*": {"DELETE"},
-		},
-
-		// Sync policy management
-		authz.SyncRead.String(): {
-			"/api/v1alpha1/sync-policies":              {"GET"},
-			"/api/v1alpha1/sync-policies/*":            {"GET"},
-			"/api/v1alpha1/sync-policies/*/sync-tasks": {"GET"},
-		},
-		authz.SyncCreate.String(): {
-			"/api/v1alpha1/sync-policies":              {"POST"},
-			"/api/v1alpha1/sync-policies/*/sync-tasks": {"POST"},
-		},
-		authz.SyncUpdate.String(): {
-			"/api/v1alpha1/sync-policies/*":                   {"PUT"},
-			"/api/v1alpha1/sync-policies/*/sync-tasks/*/stop": {"POST"},
-		},
-		authz.SyncDelete.String(): {
-			"/api/v1alpha1/sync-policies/*": {"DELETE"},
-		},
-	}
-)
-
-type methods []string
-
-func (ms methods) check(m string) bool {
-	for _, v := range ms {
-		if strings.EqualFold(v, m) {
-			return true
-		}
-	}
-	return false
-}
-
-type pathPermission struct {
-	direct   map[string]*pathEntry
-	wildcard []*pathEntry
-}
-
-type pathEntry struct {
-	path         string
-	regex        *regexp.Regexp
-	methods      methods
-	methodsPerms map[string][]string
-}
-
-type authorizer struct {
-	public *pathPermission
-	roles  *pathPermission
-}
-
-var authorizerInst authorizer
-
-func init() {
-	authorizerInst = authorizer{}
-
-	publicPerms := make(map[string]*pathEntry)
-	for k, v := range publicPaths {
-		publicPerms[k] = &pathEntry{
-			path:    k,
-			methods: v,
-		}
-	}
-	authorizerInst.public = parsePermission(publicPerms)
-
-	perms := make(map[string]*pathEntry)
-	for perm, paths := range permissionPaths {
-		for p, ms := range paths {
-			if _, ok := perms[p]; !ok {
-				perms[p] = &pathEntry{
-					path:         p,
-					methodsPerms: make(map[string][]string),
-				}
-			}
-			perms[p].merge(ms, perm)
-		}
-	}
-	authorizerInst.roles = parsePermission(perms)
-}
-
-func (p *pathEntry) merge(ms methods, perm string) {
-	for _, v := range ms {
-		p.methods = append(p.methods, v)
-		p.methodsPerms[v] = append(p.methodsPerms[v], perm)
-	}
-}
-
-func parsePermission(ms map[string]*pathEntry) *pathPermission {
-	p := &pathPermission{
-		direct: make(map[string]*pathEntry),
-	}
-	for k, v := range ms {
-		if !strings.Contains(k, "*") {
-			p.direct[k] = v
-		} else {
-			v.regex = regexp.MustCompile(strings.ReplaceAll(k, "*", "[^*/]+") + "$")
-			p.wildcard = append(p.wildcard, v)
-		}
-	}
-	return p
-}
-
-func (a *authorizer) publicCheck(path, method string) bool {
-	ms, ok := a.public.direct[path]
-	if ok && ms.methods.check(method) {
-		return true
-	}
-	for _, v := range a.public.wildcard {
-		if v.regex.MatchString(path) && v.methods.check(method) {
-			return true
-		}
-	}
-	return false
-}
-
-func (a *authorizer) getPerms(path, method string) (out []string) {
-	if ms, ok := a.roles.direct[path]; ok && ms.methods.check(method) {
-		out = append(out, ms.methodsPerms[method]...)
-		return
-	}
-	for _, v := range a.roles.wildcard {
-		if v.regex.MatchString(path) && v.methods.check(method) {
-			out = append(out, v.methodsPerms[method]...)
-		}
-	}
-	return
-}
-
-type deniedErr struct {
-	Code    codes.Code `json:"code"`
-	Message string     `json:"message"`
-}
-
-// Authz Gin platform-level permission middleware
-func Authz(verifyFunc func(ctx context.Context, perm authz.Permission) (bool, error)) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.Writer.Status() == http.StatusNotFound || c.Writer.Status() == http.StatusMethodNotAllowed {
-			c.Abort()
-			return
-		}
-
-		p := c.Request.URL.Path
-		method := c.Request.Method
-
-		// Public paths pass directly
-		if authorizerInst.publicCheck(p, method) {
-			c.Next()
-			return
-		}
-
-		// Get permission for the path
-		perms := authorizerInst.getPerms(p, method)
-		for _, perm := range perms {
-			allowed, err := verifyFunc(c.Request.Context(), authz.Permission(perm))
-			if err == nil && allowed {
-				c.Next()
-				return
-			}
-		}
-
-		// No permission path matched, pass by default (may be unregistered new API)
-		if len(perms) == 0 {
-			c.Next()
-			return
-		}
-
-		// Permission check failed
-		c.JSON(http.StatusForbidden, deniedErr{
-			Code:    codes.PermissionDenied,
-			Message: "permission denied",
-		})
-		c.Abort()
+		return handler(ctx, req)
 	}
 }

@@ -16,7 +16,6 @@ package authz
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 )
@@ -24,7 +23,7 @@ import (
 // IAuthzService permission verification service interface
 type IAuthzService interface {
 	// GetUserPermissions gets user's permission list in a project
-	GetUserPermissions(ctx context.Context, userID string, projectID int) ([]Permission, error)
+	GetUserPermissions(ctx context.Context, userID int, projectID int) ([]Permission, error)
 
 	// VerifyPlatformPermission verifies platform-level permission (gets user info from ctx)
 	VerifyPlatformPermission(ctx context.Context, perm Permission) (bool, error)
@@ -35,8 +34,8 @@ type IAuthzService interface {
 
 // IAuthzProjectRepo project repository interface required for permission verification
 type IAuthzProjectRepo interface {
-	GetUserProjectPermissions(ctx context.Context, userID string, projectID int) ([]Permission, error)
-	GetUserPlatformPermissions(ctx context.Context, userID string) ([]Permission, error)
+	GetUserProjectPermissions(ctx context.Context, userID int, projectID int) ([]Permission, error)
+	GetUserPlatformPermissions(ctx context.Context, userID int) ([]Permission, error)
 	GetProjectIDByName(ctx context.Context, name string) (int, error)
 }
 
@@ -53,7 +52,7 @@ func NewAuthzService(projectRepo IAuthzProjectRepo) *AuthzService {
 }
 
 // GetUserPermissions gets user's permission list in a project
-func (s *AuthzService) GetUserPermissions(ctx context.Context, userID string, projectID int) ([]Permission, error) {
+func (s *AuthzService) GetUserPermissions(ctx context.Context, userID int, projectID int) ([]Permission, error) {
 	platformPerms, err := s.projectRepo.GetUserPlatformPermissions(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -68,12 +67,12 @@ func (s *AuthzService) GetUserPermissions(ctx context.Context, userID string, pr
 	return append(platformPerms, projectPerms...), nil
 }
 
-func (s *AuthzService) getUserIDFromCtx(ctx context.Context) (string, bool) {
+func (s *AuthzService) getUserIDFromCtx(ctx context.Context) (int, bool) {
 	userIDValue := ctx.Value(user.UserIdCtxKey)
 	if userIDValue == nil {
-		return "", false
+		return 0, false
 	}
-	return strconv.Itoa(userIDValue.(int)), true
+	return userIDValue.(int), true
 }
 
 // VerifyPlatformPermission verifies platform-level permission (gets user info from ctx)

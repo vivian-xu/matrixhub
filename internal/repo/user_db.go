@@ -19,6 +19,8 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/role"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/crypto"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/utils"
@@ -88,6 +90,67 @@ func (u *UserRepo) UpdateUserPassword(ctx context.Context, id int, password stri
 	}
 	user.Password = password
 	return u.db.WithContext(ctx).Model(user).Where("id = ?", user.ID).Updates(user).Error
+}
+
+func (u *UserRepo) SetUserSysAdmin(ctx context.Context, userID int, isAdmin bool) error {
+	if isAdmin {
+		isAdminAlready, err := u.IsUserSysAdmin(ctx, userID)
+		if err != nil {
+			return err
+		}
+		if isAdminAlready {
+			return nil
+		}
+
+		member := &project.ProjectMember{
+			MemberID:   userID,
+			MemberType: project.MemberTypeUser,
+			RoleID:     role.PlatformRoleAdmin,
+			ProjectID:  nil,
+		}
+		return u.db.WithContext(ctx).Create(member).Error
+	} else {
+		return u.db.WithContext(ctx).
+			Where("member_id = ? AND member_type = ? AND project_id IS NULL AND role_id = ?", userID, project.MemberTypeUser, role.PlatformRoleAdmin).
+			Delete(&project.ProjectMember{}).Error
+	}
+}
+
+func (u *UserRepo) IsUserSysAdmin(ctx context.Context, userID int) (bool, error) {
+	var count int64
+	err := u.db.WithContext(ctx).
+		Model(&project.ProjectMember{}).
+		Where("member_id = ? AND member_type = ? AND project_id IS NULL AND role_id = ?", userID, project.MemberTypeUser, role.PlatformRoleAdmin).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (u *UserRepo) GetUserAllProjectRoles(ctx context.Context, userID int) (map[string]int, error) {
+	type projectRole struct {
+		ProjectName string
+		RoleID      int
+	}
+
+	var results []projectRole
+	err := u.db.WithContext(ctx).
+		Table("members_roles_projects").
+		Select("projects.name as project_name, members_roles_projects.role_id").
+		Joins("INNER JOIN projects ON projects.id = members_roles_projects.project_id").
+		Where("members_roles_projects.member_id = ? AND members_roles_projects.member_type = ? AND members_roles_projects.project_id IS NOT NULL", userID, project.MemberTypeUser).
+		Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make(map[string]int)
+	for _, result := range results {
+		roles[result.ProjectName] = result.RoleID
+	}
+
+	return roles, nil
 }
 
 func NewUserRepo(db *gorm.DB) user.IUserRepo {

@@ -109,17 +109,13 @@ func NewAPIServer(config *config.Config) *APIServer {
 	server.initHandlersServicesRepos()
 
 	// Register authn + authz middleware (must be after initHandlersServicesRepos)
-	server.engine.Use(
-		middleware.GinAuthn(server.repos.Session),
-		middleware.Authz(server.authzService.VerifyPlatformPermission),
-	)
-
 	streamMiddleware := []grpc.StreamServerInterceptor{
 		grpc_recovery.StreamServerInterceptor(),
 	}
 	unaryMiddleware := []grpc.UnaryServerInterceptor{
 		grpc_recovery.UnaryServerInterceptor(),
 		middleware.AuthInterceptor(server.repos.Session),
+		middleware.AuthzInterceptor(server.authzService.VerifyPlatformPermission),
 	}
 
 	grpcServer := grpc.NewServer(
@@ -303,7 +299,7 @@ func (server *APIServer) initHandlersServicesRepos() {
 	)
 
 	// init permission service
-	authzService := authz.NewAuthzService(repos.Project)
+	authzService := authz.NewAuthzService(repos.Authz)
 
 	// init domain services, add if needed
 	modelService := model.NewModelService(
@@ -339,8 +335,8 @@ func (server *APIServer) initHandlersServicesRepos() {
 		handler.NewLoginHandler(userService),
 		handler.NewRegistryHandler(repos.Registry),
 		handler.NewProjectHandler(repos.Project, authzService),
-		handler.NewUserHandler(repos.User, repos.Project, authzService),
 		handler.NewCurrentUserHandler(repos.User, repos.AccessToken),
+		handler.NewUserHandler(repos.User, authzService),
 		handler.NewDatasetHandler(datasetService),
 		handler.NewModelHandler(modelService),
 		handler.NewSyncPolicyHandler(syncPolicyService, repos.Registry),

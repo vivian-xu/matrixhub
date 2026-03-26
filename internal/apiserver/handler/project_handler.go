@@ -16,7 +16,6 @@ package handler
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/samber/lo"
 	"google.golang.org/grpc/codes"
@@ -46,7 +45,7 @@ func NewProjectHandler(repo project.IProjectRepo, authzService authz.IAuthzServi
 
 func (h *ProjectHandler) RegisterToServer(opt *ServerOptions) {
 	projectv1alpha1.RegisterProjectsServer(opt.GRPCServer, h)
-	if err := projectv1alpha1.RegisterProjectsHandlerServer(context.Background(), opt.GatewayMux, h); err != nil {
+	if err := projectv1alpha1.RegisterProjectsHandlerFromEndpoint(context.Background(), opt.GatewayMux, opt.GRPCAddr, opt.GRPCDialOpt); err != nil {
 		log.Errorf("register handler error: %s", err.Error())
 	}
 }
@@ -89,7 +88,7 @@ func (h *ProjectHandler) GetProject(ctx context.Context, req *projectv1alpha1.Ge
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	if allowed, err := h.authzService.VerifyProjectPermission(ctx, p.ID, authz.ProjectRead); err != nil || !allowed {
+	if allowed, err := h.authzService.VerifyProjectPermission(ctx, p.ID, authz.ProjectGet); err != nil || !allowed {
 		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
@@ -197,7 +196,7 @@ func (h *ProjectHandler) ListProjectMembers(ctx context.Context, req *projectv1a
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	if allowed, err := h.authzService.VerifyProjectPermission(ctx, projectID, authz.MemberRead); err != nil || !allowed {
+	if allowed, err := h.authzService.VerifyProjectPermission(ctx, projectID, authz.MemberGet); err != nil || !allowed {
 		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
@@ -215,7 +214,7 @@ func (h *ProjectHandler) ListProjectMembers(ctx context.Context, req *projectv1a
 	return &projectv1alpha1.ListProjectMembersResponse{
 		Members: lo.Map(members, func(m *project.ProjectMember, _ int) *projectv1alpha1.ProjectMember {
 			return &projectv1alpha1.ProjectMember{
-				MemberId:   m.MemberID,
+				MemberId:   int32(m.MemberID),
 				MemberName: m.MemberName,
 				MemberType: convertDomainMemberTypeToProto(m.MemberType),
 				Role:       convertDomainRoleToProto(m.RoleID),
@@ -246,7 +245,7 @@ func (h *ProjectHandler) AddProjectMemberWithRole(ctx context.Context, req *proj
 
 	pm := &project.ProjectMember{
 		ProjectID:  &projectID,
-		MemberID:   req.GetMemberId(),
+		MemberID:   int(req.GetMemberId()),
 		MemberType: convertProtoMemberTypeToDomain(req.GetMemberType()),
 		RoleID:     convertProtoRoleToDomain(req.GetRole()),
 	}
@@ -263,9 +262,9 @@ func (h *ProjectHandler) RemoveProjectMembers(ctx context.Context, req *projectv
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	currentUserID := strconv.Itoa(user.GetCurrentUserId(ctx))
+	currentUserID := user.GetCurrentUserId(ctx)
 	for _, m := range req.GetMembers() {
-		if m.GetMemberType() == projectv1alpha1.MemberType_MEMBER_TYPE_USER && m.GetMemberId() == currentUserID {
+		if m.GetMemberType() == projectv1alpha1.MemberType_MEMBER_TYPE_USER && int(m.GetMemberId()) == currentUserID {
 			return nil, status.Error(codes.InvalidArgument, "cannot remove yourself from the project")
 		}
 	}
@@ -281,7 +280,7 @@ func (h *ProjectHandler) RemoveProjectMembers(ctx context.Context, req *projectv
 
 	members := lo.Map(req.GetMembers(), func(m *projectv1alpha1.MemberToRemove, _ int) *project.Member {
 		return &project.Member{
-			MemberID:   m.GetMemberId(),
+			MemberID:   int(m.GetMemberId()),
 			MemberType: convertProtoMemberTypeToDomain(m.GetMemberType()),
 		}
 	})
@@ -308,7 +307,7 @@ func (h *ProjectHandler) UpdateProjectMemberRole(ctx context.Context, req *proje
 	}
 
 	if err := h.projectRepo.UpdateProjectMemberRole(ctx, projectID, project.Member{
-		MemberID:   req.GetMemberId(),
+		MemberID:   int(req.GetMemberId()),
 		MemberType: convertProtoMemberTypeToDomain(req.GetMemberType()),
 	}, convertProtoRoleToDomain(req.GetRole())); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

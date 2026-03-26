@@ -387,7 +387,7 @@ func request_Projects_UpdateProjectMemberRole_0(ctx context.Context, marshaler r
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "member_id")
 	}
-	protoReq.MemberId, err = runtime.String(val)
+	protoReq.MemberId, err = runtime.Int32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "member_id", err)
 	}
@@ -416,7 +416,7 @@ func local_request_Projects_UpdateProjectMemberRole_0(ctx context.Context, marsh
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "member_id")
 	}
-	protoReq.MemberId, err = runtime.String(val)
+	protoReq.MemberId, err = runtime.Int32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "member_id", err)
 	}

@@ -365,11 +365,12 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should add a member with viewer role", Label("L00010"), func() {
-			memberID := "test-user-viewer"
+			memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("viewer"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
 
-			_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+			_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 				MemberId:   memberID,
 				MemberType: &memberType,
 				Role:       &role,
@@ -405,11 +406,12 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should add a member with editor role", Label("L00025"), func() {
-			memberID := "test-user-editor"
+			memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("editor"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.EDITOR_V1alpha1ProjectRoleType
 
-			_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+			_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 				MemberId:   memberID,
 				MemberType: &memberType,
 				Role:       &role,
@@ -445,11 +447,12 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should add a member with admin role", Label("L00026"), func() {
-			memberID := "test-user-admin"
+			memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("admin"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.ADMIN_V1alpha1ProjectRoleType
 
-			_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+			_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 				MemberId:   memberID,
 				MemberType: &memberType,
 				Role:       &role,
@@ -485,13 +488,14 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should update member role from viewer to editor", Label("L00011"), func() {
-			memberID := "test-user-002"
+			memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("role-update"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			viewerRole := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
 			editorRole := v1alpha1project.EDITOR_V1alpha1ProjectRoleType
 
 			// Add member first with viewer role
-			_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+			_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 				MemberId:   memberID,
 				MemberType: &memberType,
 				Role:       &viewerRole,
@@ -533,12 +537,13 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should remove single member from project", Label("L00012"), func() {
-			memberID := "test-user-003"
+			memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("remove"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
 
 			// Add member first
-			_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+			_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 				MemberId:   memberID,
 				MemberType: &memberType,
 				Role:       &role,
@@ -568,14 +573,17 @@ var _ = Describe("Project", Label("project"), func() {
 		})
 
 		It("should batch remove members from project", Label("L00028"), func() {
-			member1 := "test-user-batch-1"
-			member2 := "test-user-batch-2"
-			member3 := "test-user-batch-3"
+			member1, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("batch1"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
+			member2, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("batch2"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
+			member3, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername("batch3"), "Test@123456", false)
+			Expect(err).NotTo(HaveOccurred())
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
 
 			// Add members first
-			for _, memberID := range []string{member1, member2, member3} {
+			for _, memberID := range []int32{member1, member2, member3} {
 				_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 					MemberId:   memberID,
 					MemberType: &memberType,
@@ -585,7 +593,7 @@ var _ = Describe("Project", Label("project"), func() {
 			}
 
 			// Batch remove members
-			_, _, err := projectsApi.ProjectsRemoveProjectMembers(ctx, projectName, v1alpha1project.ProjectsRemoveProjectMembersBody{
+			_, _, err = projectsApi.ProjectsRemoveProjectMembers(ctx, projectName, v1alpha1project.ProjectsRemoveProjectMembersBody{
 				Members: []v1alpha1project.V1alpha1MemberToRemove{
 					{MemberId: member1, MemberType: &memberType},
 					{MemberId: member2, MemberType: &memberType},
@@ -629,8 +637,11 @@ var _ = Describe("Project", Label("project"), func() {
 			// Add multiple members
 			memberType := v1alpha1project.USER_V1alpha1MemberType
 			role := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
+			var memberIDs []int32
 			for i := 0; i < 15; i++ {
-				memberID := fmt.Sprintf("test-page-user-%d", i)
+				memberID, _, err := tools.CreateUserAndLoginWithID(tools.GenerateTestUsername(fmt.Sprintf("page-%d", i)), "Test@123456", false)
+				Expect(err).NotTo(HaveOccurred())
+				memberIDs = append(memberIDs, memberID)
 				_, _, _ = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
 					MemberId:   memberID,
 					MemberType: &memberType,
@@ -649,8 +660,7 @@ var _ = Describe("Project", Label("project"), func() {
 			GinkgoWriter.Printf("Page 1: found %d members, total=%d\n", len(page1Resp.Members), page1Resp.Pagination.Total)
 
 			// Cleanup
-			for i := range 15 {
-				memberID := fmt.Sprintf("test-page-user-%d", i)
+			for _, memberID := range memberIDs {
 				_, _, _ = projectsApi.ProjectsRemoveProjectMembers(ctx, projectName, v1alpha1project.ProjectsRemoveProjectMembersBody{
 					Members: []v1alpha1project.V1alpha1MemberToRemove{
 						{MemberId: memberID, MemberType: &memberType},
@@ -665,15 +675,15 @@ var _ = Describe("Project", Label("project"), func() {
 			viewerUsername    string
 			viewerPassword    string
 			viewerCookie      string
-			viewerID          string
+			viewerID          int32
 			editorUsername    string
 			editorPassword    string
 			editorCookie      string
-			editorID          string
+			editorID          int32
 			projAdminUsername string
 			projAdminPassword string
 			projAdminCookie   string
-			projAdminID       string
+			projAdminID       int32
 		)
 
 		BeforeEach(func() {

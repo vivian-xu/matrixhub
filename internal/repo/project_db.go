@@ -17,7 +17,6 @@ package repo
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"gorm.io/gorm"
 
@@ -44,8 +43,8 @@ func (r *ProjectDBRepo) CreateProject(ctx context.Context, param *project.Projec
 			return err
 		}
 
-		creatorID := r.getCurrentUserID(ctx)
-		if creatorID != "" {
+		creatorID := user.GetCurrentUserId(ctx)
+		if creatorID != 0 {
 			member := &project.ProjectMember{
 				ProjectID:  &param.ID,
 				MemberID:   creatorID,
@@ -93,14 +92,6 @@ func (r *ProjectDBRepo) GetProjectIDByName(ctx context.Context, name string) (in
 	return p.ID, nil
 }
 
-func (r *ProjectDBRepo) getCurrentUserID(ctx context.Context) string {
-	userID := user.GetCurrentUserId(ctx)
-	if userID == 0 {
-		return ""
-	}
-	return strconv.Itoa(userID)
-}
-
 func (r *ProjectDBRepo) ListProjects(ctx context.Context, name string, projectType project.ProjectType, managedOnly bool, page, pageSize int) ([]*project.Project, int64, error) {
 	var projects []*project.Project
 	var total int64
@@ -114,7 +105,7 @@ func (r *ProjectDBRepo) ListProjects(ctx context.Context, name string, projectTy
 		query = query.Where("type = ?", projectType)
 	}
 
-	userID := r.getCurrentUserID(ctx)
+	userID := user.GetCurrentUserId(ctx)
 	if managedOnly {
 		// Only return projects where the current user has access
 		query = query.Where("EXISTS (SELECT 1 FROM members_roles_projects WHERE project_id = projects.id AND member_id = ? AND member_type = ?)", userID, project.MemberTypeUser)
@@ -229,7 +220,7 @@ func (r *ProjectDBRepo) UpdateProjectMemberRole(ctx context.Context, projectID i
 	return nil
 }
 
-func (r *ProjectDBRepo) GetUserProjectPermissions(ctx context.Context, userID string, projectID int) ([]authz.Permission, error) {
+func (r *ProjectDBRepo) GetUserProjectPermissions(ctx context.Context, userID int, projectID int) ([]authz.Permission, error) {
 	var ro role.Role
 	err := r.db.WithContext(ctx).
 		Table("roles").
@@ -247,7 +238,7 @@ func (r *ProjectDBRepo) GetUserProjectPermissions(ctx context.Context, userID st
 	return ro.Permissions, nil
 }
 
-func (r *ProjectDBRepo) GetUserProjectRole(ctx context.Context, userID string, projectID int) (int, error) {
+func (r *ProjectDBRepo) GetUserProjectRole(ctx context.Context, userID int, projectID int) (int, error) {
 	var member project.ProjectMember
 	err := r.db.WithContext(ctx).
 		Select("role_id").
@@ -262,7 +253,7 @@ func (r *ProjectDBRepo) GetUserProjectRole(ctx context.Context, userID string, p
 	return int(member.RoleID), nil
 }
 
-func (r *ProjectDBRepo) GetUserPlatformPermissions(ctx context.Context, userID string) ([]authz.Permission, error) {
+func (r *ProjectDBRepo) GetUserPlatformPermissions(ctx context.Context, userID int) ([]authz.Permission, error) {
 	var ro role.Role
 	err := r.db.WithContext(ctx).
 		Table("roles").
@@ -280,7 +271,7 @@ func (r *ProjectDBRepo) GetUserPlatformPermissions(ctx context.Context, userID s
 	return ro.Permissions, nil
 }
 
-func (r *ProjectDBRepo) IsUserSysAdmin(ctx context.Context, userID string) (bool, error) {
+func (r *ProjectDBRepo) IsUserSysAdmin(ctx context.Context, userID int) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&project.ProjectMember{}).
@@ -292,7 +283,7 @@ func (r *ProjectDBRepo) IsUserSysAdmin(ctx context.Context, userID string) (bool
 	return count > 0, nil
 }
 
-func (r *ProjectDBRepo) SetUserSysAdmin(ctx context.Context, userID string, isAdmin bool) error {
+func (r *ProjectDBRepo) SetUserSysAdmin(ctx context.Context, userID int, isAdmin bool) error {
 	if isAdmin {
 		isAdminAlready, err := r.IsUserSysAdmin(ctx, userID)
 		if err != nil {
@@ -316,7 +307,7 @@ func (r *ProjectDBRepo) SetUserSysAdmin(ctx context.Context, userID string, isAd
 	}
 }
 
-func (r *ProjectDBRepo) GetUserAllProjectRoles(ctx context.Context, userID string) (map[string]int, error) {
+func (r *ProjectDBRepo) GetUserAllProjectRoles(ctx context.Context, userID int) (map[string]int, error) {
 	type projectRole struct {
 		ProjectName string
 		RoleID      int

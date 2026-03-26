@@ -46,4 +46,13 @@ type IUserRepo interface {
 	ListUsers(ctx context.Context, page, pageSize int, search string) ([]*User, int64, error)
 	DeleteUser(ctx context.Context, id int) error
 	UpdateUserPassword(ctx context.Context, id int, password string) error
+
+	// SetUserSysAdmin sets user as system admin
+	SetUserSysAdmin(ctx context.Context, userID int, isAdmin bool) error
+
+	// IsUserSysAdmin checks if user is system admin
+	IsUserSysAdmin(ctx context.Context, userID int) (bool, error)
+
+	// GetUserAllProjectRoles gets user's roles in all projects
+	GetUserAllProjectRoles(ctx context.Context, userID int) (map[string]int, error)
 }

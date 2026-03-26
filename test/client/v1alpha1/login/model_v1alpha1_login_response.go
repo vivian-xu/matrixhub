@@ -10,5 +10,4 @@
 package v1alpha1
 
 type V1alpha1LoginResponse struct {
-	Cookie string `json:"cookie,omitempty"`
 }

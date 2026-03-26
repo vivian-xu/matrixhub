@@ -146,7 +146,7 @@ message ListProjectMembersResponse {
 }
 
 message ProjectMember {
-  string member_id = 1;
+  int32 member_id = 1;
   string member_name = 2;
   MemberType member_type = 3;
   ProjectRoleType role = 4;
@@ -160,7 +160,7 @@ enum MemberType {
 message AddProjectMemberWithRoleRequest {
   string name = 1 [(validate.rules).string.min_len = 1];
   MemberType member_type = 2 [(validate.rules).enum.defined_only = true];
-  string member_id = 3 [(validate.rules).string.min_len = 1];
+  int32 member_id = 3 [(validate.rules).int32.gt = 0];
   ProjectRoleType role = 4 [(validate.rules).enum.defined_only = true];
 }
 
@@ -173,7 +173,7 @@ message RemoveProjectMembersRequest {
 
 message MemberToRemove {
   MemberType member_type = 1 [(validate.rules).enum.defined_only = true];
-  string member_id = 2 [(validate.rules).string.min_len = 1];
+  int32 member_id = 2 [(validate.rules).int32.gt = 0];
 }
 
 message RemoveProjectMembersResponse {}
@@ -181,7 +181,7 @@ message RemoveProjectMembersResponse {}
 message UpdateProjectMemberRoleRequest {
   string name = 1 [(validate.rules).string.min_len = 1];
   MemberType member_type = 2 [(validate.rules).enum.defined_only = true];
-  string member_id = 3 [(validate.rules).string.min_len = 1];
+  int32 member_id = 3 [(validate.rules).int32.gt = 0];
   ProjectRoleType role = 4 [(validate.rules).enum.defined_only = true];
 }
 
