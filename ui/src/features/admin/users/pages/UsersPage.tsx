@@ -20,8 +20,6 @@ import {
 import { DEFAULT_USERS_PAGE } from '../users.schema'
 import { getUserRowId } from '../users.utils'
 
-import type { User } from '@matrixhub/api-ts/v1alpha1/user.pb'
-
 const usersRouteApi = getRouteApi('/(auth)/admin/users')
 
 export function UsersPage() {
@@ -65,10 +63,6 @@ export function UsersPage() {
     // TODO: open create user modal
   }
 
-  const handleDelete = (_user: User) => {
-    // TODO: Implement delete functionality
-  }
-
   const handleBatchDelete = () => {
     if (selectedCount === 0) {
       return
@@ -86,7 +80,6 @@ export function UsersPage() {
       searchValue={search.query ?? ''}
       onSearchChange={onSearchChange}
       onRefresh={onRefresh}
-      onDelete={handleDelete}
       onBatchDelete={handleBatchDelete}
       rowSelection={rowSelection}
       onRowSelectionChange={setRowSelection}

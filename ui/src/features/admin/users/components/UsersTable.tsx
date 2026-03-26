@@ -18,13 +18,9 @@ import type { MRT_ColumnDef } from 'mantine-react-table'
 
 type UserCellProps = Parameters<NonNullable<MRT_ColumnDef<User>['Cell']>>[0]
 
-interface UsersTableMeta {
-  onDelete?: (user: User) => void
-}
+type UserRowActionsProps = Parameters<NonNullable<DataTableProps<User>['renderRowActions']>>[0]
 
-type UsersTableProps = Omit<DataTableProps<User>, 'columns'> & {
-  onDelete: (user: User) => void
-}
+type UsersTableProps = Omit<DataTableProps<User>, 'columns'>
 
 function UserAdminCell({ row }: UserCellProps) {
   const { t } = useTranslation()
@@ -62,14 +58,11 @@ function UserNameCell({ row }: UserCellProps) {
 
 function UserActionsCell({
   row,
-  table,
-}: UserCellProps) {
+}: UserRowActionsProps) {
   const { t } = useTranslation()
   const adminAction = row.original.isAdmin
     ? t('routes.admin.users.actions.revokeAdmin')
     : t('routes.admin.users.actions.setAdmin')
-
-  const onDelete = (table.options.meta as UsersTableMeta | undefined)?.onDelete
 
   return (
     <Group gap={4} wrap="nowrap">
@@ -94,7 +87,6 @@ function UserActionsCell({
         size="compact-sm"
         color="blue"
         disabled
-        onClick={() => onDelete?.(row.original)}
       >
         {t('routes.admin.users.actions.delete')}
       </Button>
@@ -103,21 +95,8 @@ function UserActionsCell({
 }
 
 export function UsersTable({
-  data,
-  pagination,
-  page,
-  loading,
-  searchValue,
-  onSearchChange,
-  onRefresh,
-  onDelete,
-  onBatchDelete,
-  rowSelection,
-  onRowSelectionChange,
-  onPageChange,
-  selectedCount,
-  toolbarExtra,
-  ...rest
+  tableOptions,
+  ...props
 }: UsersTableProps) {
   const { t } = useTranslation()
 
@@ -146,39 +125,24 @@ export function UsersTable({
       size: 180,
       accessorFn: row => formatDateTime(row.createdAt),
     },
-    {
-      id: 'actions',
-      header: t('routes.admin.users.table.actions'),
-      size: 260,
-      Cell: UserActionsCell,
-    },
+
   ], [t])
 
   return (
     <DataTable
-      {...rest}
-      data={data}
+      {...props}
       columns={columns}
-      pagination={pagination}
-      page={page}
-      loading={loading}
       emptyTitle={t('routes.admin.users.table.empty')}
       searchPlaceholder={t('routes.admin.users.searchPlaceholder')}
-      searchValue={searchValue}
-      onSearchChange={onSearchChange}
-      onRefresh={onRefresh}
-      onBatchDelete={onBatchDelete}
-      selectedCount={selectedCount}
-      onPageChange={onPageChange}
-      toolbarExtra={toolbarExtra}
       enableRowSelection
-      rowSelection={rowSelection}
-      onRowSelectionChange={onRowSelectionChange}
       getRowId={getUserRowId}
+      enableRowActions
+      renderRowActions={UserActionsCell}
+      positionActionsColumn="last"
       tableOptions={{
+        ...tableOptions,
         enableBatchRowSelection: true,
         enableMultiRowSelection: true,
-        meta: { onDelete },
       }}
     />
   )
