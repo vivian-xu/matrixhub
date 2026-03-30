@@ -319,7 +319,7 @@ func (server *APIServer) initHandlersServicesRepos() {
 		handler.NewCurrentUserHandler(repos.User, repos.AccessToken),
 		handler.NewUserHandler(repos.User, authzService),
 		handler.NewDatasetHandler(datasetService),
-		handler.NewModelHandler(modelService),
+		handler.NewModelHandler(modelService, authzService),
 		handler.NewSyncPolicyHandler(syncPolicyService, repos.Registry),
 	}
 

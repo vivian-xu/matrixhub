@@ -10,4 +10,5 @@
 package v1alpha1
 
 type V1alpha1CreateAccessTokenResponse struct {
+	Token string `json:"token,omitempty"`
 }

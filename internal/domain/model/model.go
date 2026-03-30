@@ -47,13 +47,14 @@ type Label struct {
 
 // Filter defines query parameters for listing models.
 type Filter struct {
-	Project  string   // filter by project name
-	Label    []string // filter by labels
-	Search   string   // project name or model name, prioritize project name matching (supports fuzzy search).
-	Sort     string
-	Page     int32
-	PageSize int32
-	Popular  *bool // filter by popular flag (true = only popular, false/nil = all)
+	Project    string   // filter by project name
+	ProjectIDs []int    // filter by accessible project IDs
+	Label      []string // filter by labels
+	Search     string   // project name or model name, prioritize project name matching (supports fuzzy search).
+	Sort       string
+	Page       int32
+	PageSize   int32
+	Popular    *bool // filter by popular flag (true = only popular, false/nil = all)
 }
 
 // MetadataUpdate contains optional fields for updating model metadata.

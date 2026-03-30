@@ -16,17 +16,21 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"gorm.io/gorm"
 
 	"github.com/matrixhub-ai/matrixhub/internal/domain/authz"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/project"
-	"github.com/matrixhub-ai/matrixhub/internal/domain/role"
 )
 
 type AuthzDBRepo struct {
 	db *gorm.DB
+}
+
+type permissionRow struct {
+	Permissions string `gorm:"column:permissions"`
 }
 
 var _ authz.IAuthzProjectRepo = (*AuthzDBRepo)(nil)
@@ -35,15 +39,27 @@ func NewAuthzDBRepo(db *gorm.DB) authz.IAuthzProjectRepo {
 	return &AuthzDBRepo{db: db}
 }
 
+func parsePermissions(raw string) ([]authz.Permission, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	var permissions []authz.Permission
+	if err := json.Unmarshal([]byte(raw), &permissions); err != nil {
+		return nil, err
+	}
+	return permissions, nil
+}
+
 // GetUserProjectPermissions gets user's permissions in a project
 func (r *AuthzDBRepo) GetUserProjectPermissions(ctx context.Context, userID int, projectID int) ([]authz.Permission, error) {
-	var ro role.Role
+	var row permissionRow
 	err := r.db.WithContext(ctx).
 		Table("roles").
 		Select("roles.permissions").
 		Joins("INNER JOIN members_roles_projects mrp ON mrp.role_id = roles.id").
 		Where("mrp.project_id = ? AND mrp.member_id = ? AND mrp.member_type = ?", projectID, userID, project.MemberTypeUser).
-		First(&ro).Error
+		First(&row).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -51,18 +67,18 @@ func (r *AuthzDBRepo) GetUserProjectPermissions(ctx context.Context, userID int,
 		return nil, err
 	}
 
-	return ro.Permissions, nil
+	return parsePermissions(row.Permissions)
 }
 
 // GetUserPlatformPermissions gets user's platform-level permissions
 func (r *AuthzDBRepo) GetUserPlatformPermissions(ctx context.Context, userID int) ([]authz.Permission, error) {
-	var ro role.Role
+	var row permissionRow
 	err := r.db.WithContext(ctx).
 		Table("roles").
 		Select("roles.permissions").
 		Joins("INNER JOIN members_roles_projects mrp ON mrp.role_id = roles.id").
 		Where("mrp.project_id IS NULL AND mrp.member_id = ? AND mrp.member_type = ?", userID, project.MemberTypeUser).
-		First(&ro).Error
+		First(&row).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -70,7 +86,7 @@ func (r *AuthzDBRepo) GetUserPlatformPermissions(ctx context.Context, userID int
 		return nil, err
 	}
 
-	return ro.Permissions, nil
+	return parsePermissions(row.Permissions)
 }
 
 // GetProjectIDByName gets project ID by name
@@ -84,4 +100,24 @@ func (r *AuthzDBRepo) GetProjectIDByName(ctx context.Context, name string) (int,
 		return 0, err
 	}
 	return p.ID, nil
+}
+
+// GetUserAccessibleProjectIDs gets all project IDs where the user has membership
+// or that are public (visible to everyone)
+func (r *AuthzDBRepo) GetUserAccessibleProjectIDs(ctx context.Context, userID int) ([]int, error) {
+	var projectIDs []int
+	err := r.db.WithContext(ctx).
+		Table("projects").
+		Select("DISTINCT id").
+		Where("type = ?", project.ProjectTypePublic).
+		Or("id IN (?)",
+			r.db.Table("members_roles_projects").
+				Select("project_id").
+				Where("member_id = ? AND member_type = ? AND project_id IS NOT NULL", userID, project.MemberTypeUser),
+		).
+		Find(&projectIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return projectIDs, nil
 }

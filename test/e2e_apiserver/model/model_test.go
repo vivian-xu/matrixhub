@@ -646,4 +646,360 @@ var _ = Describe("Model", Label("model"), func() {
 			Expect(err).To(HaveOccurred())
 		})
 	})
+
+	// ═══════════════════════════════════════════════════════════
+	// 7. Multi-user permission tests
+	// ═══════════════════════════════════════════════════════════
+	Context("Multi-user permission tests", func() {
+		var (
+			viewerCookie    string
+			viewerID        int32
+			editorCookie    string
+			editorID        int32
+			projAdminCookie string
+			projAdminID     int32
+		)
+
+		BeforeEach(func() {
+			password := "Test@123456"
+
+			viewerUsername := tools.GenerateTestUsername("m-viewer")
+			var err error
+			viewerID, viewerCookie, err = tools.CreateUserAndLoginWithID(viewerUsername, password, false)
+			Expect(err).NotTo(HaveOccurred())
+
+			editorUsername := tools.GenerateTestUsername("m-editor")
+			editorID, editorCookie, err = tools.CreateUserAndLoginWithID(editorUsername, password, false)
+			Expect(err).NotTo(HaveOccurred())
+
+			projAdminUsername := tools.GenerateTestUsername("m-padmin")
+			projAdminID, projAdminCookie, err = tools.CreateUserAndLoginWithID(projAdminUsername, password, false)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("Project viewer model permissions", func() {
+			var projectName string
+			var modelName string
+
+			BeforeEach(func() {
+				projectName = tools.GenerateTestProjectName("m-viewer-perm")
+				_, _, err := projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+					Name: projectName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				memberType := v1alpha1project.USER_V1alpha1MemberType
+				viewerRole := v1alpha1project.VIEWER_V1alpha1ProjectRoleType
+				_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+					MemberId:   viewerID,
+					MemberType: &memberType,
+					Role:       &viewerRole,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				modelName = tools.GenerateTestModelName("viewer-model")
+				_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    modelName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, projectName)
+			})
+
+			It("should allow viewer to get model", Label("M00039"), func() {
+				viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+				getResp, _, err := viewerModelsApi.ModelsGetModel(ctx, projectName, modelName)
+				Expect(err).NotTo(HaveOccurred(), "Viewer should be able to get model")
+				Expect(getResp.Name).To(Equal(modelName))
+			})
+
+			It("should deny viewer from creating model", Label("M00040"), func() {
+				viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+				_, _, err := viewerModelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    tools.GenerateTestModelName("viewer-create"),
+				})
+				Expect(err).To(HaveOccurred(), "Viewer should not be able to create model")
+			})
+
+			It("should deny viewer from deleting model", Label("M00041"), func() {
+				viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+				_, _, err := viewerModelsApi.ModelsDeleteModel(ctx, projectName, modelName)
+				Expect(err).To(HaveOccurred(), "Viewer should not be able to delete model")
+			})
+		})
+
+		Context("Project editor model permissions", func() {
+			var projectName string
+			var modelName string
+
+			BeforeEach(func() {
+				projectName = tools.GenerateTestProjectName("m-editor-perm")
+				_, _, err := projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+					Name: projectName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				memberType := v1alpha1project.USER_V1alpha1MemberType
+				editorRole := v1alpha1project.EDITOR_V1alpha1ProjectRoleType
+				_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+					MemberId:   editorID,
+					MemberType: &memberType,
+					Role:       &editorRole,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				modelName = tools.GenerateTestModelName("editor-model")
+				_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    modelName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, projectName)
+			})
+
+			It("should allow editor to get model", Label("M00042"), func() {
+				editorModelsApi := tools.CreateModelClientWithCookie(editorCookie)
+				getResp, _, err := editorModelsApi.ModelsGetModel(ctx, projectName, modelName)
+				Expect(err).NotTo(HaveOccurred(), "Editor should be able to get model")
+				Expect(getResp.Name).To(Equal(modelName))
+			})
+
+			It("should allow editor to create model", Label("M00043"), func() {
+				editorModelsApi := tools.CreateModelClientWithCookie(editorCookie)
+				_, _, err := editorModelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    tools.GenerateTestModelName("editor-create"),
+				})
+				Expect(err).NotTo(HaveOccurred(), "Editor should be able to create model")
+			})
+
+			It("should deny editor from deleting model", Label("M00044"), func() {
+				editorModelsApi := tools.CreateModelClientWithCookie(editorCookie)
+				_, _, err := editorModelsApi.ModelsDeleteModel(ctx, projectName, modelName)
+				Expect(err).To(HaveOccurred(), "Editor should not be able to delete model")
+			})
+		})
+
+		Context("Project admin model permissions", func() {
+			var projectName string
+			var modelName string
+
+			BeforeEach(func() {
+				projectName = tools.GenerateTestProjectName("m-padmin-perm")
+				_, _, err := projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+					Name: projectName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				memberType := v1alpha1project.USER_V1alpha1MemberType
+				adminRole := v1alpha1project.ADMIN_V1alpha1ProjectRoleType
+				_, _, err = projectsApi.ProjectsAddProjectMemberWithRole(ctx, projectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+					MemberId:   projAdminID,
+					MemberType: &memberType,
+					Role:       &adminRole,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				modelName = tools.GenerateTestModelName("padmin-model")
+				_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    modelName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, projectName)
+			})
+
+			It("should allow project admin to get model", Label("M00045"), func() {
+				projAdminModelsApi := tools.CreateModelClientWithCookie(projAdminCookie)
+				getResp, _, err := projAdminModelsApi.ModelsGetModel(ctx, projectName, modelName)
+				Expect(err).NotTo(HaveOccurred(), "Project admin should be able to get model")
+				Expect(getResp.Name).To(Equal(modelName))
+			})
+
+			It("should allow project admin to create model", Label("M00046"), func() {
+				projAdminModelsApi := tools.CreateModelClientWithCookie(projAdminCookie)
+				_, _, err := projAdminModelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: projectName,
+					Name:    tools.GenerateTestModelName("padmin-create"),
+				})
+				Expect(err).NotTo(HaveOccurred(), "Project admin should be able to create model")
+			})
+
+			It("should allow project admin to delete model", Label("M00047"), func() {
+				projAdminModelsApi := tools.CreateModelClientWithCookie(projAdminCookie)
+				_, _, err := projAdminModelsApi.ModelsDeleteModel(ctx, projectName, modelName)
+				Expect(err).NotTo(HaveOccurred(), "Project admin should be able to delete model")
+			})
+		})
+
+		It("should deny non-member from accessing model in project", Label("M00048"), func() {
+			projectName := tools.GenerateTestProjectName("m-nonmember")
+			_, _, err := projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+				Name: projectName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			defer func() {
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, projectName)
+			}()
+
+			modelName := tools.GenerateTestModelName("nonmember")
+			_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+				Project: projectName,
+				Name:    modelName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+			_, _, err = viewerModelsApi.ModelsGetModel(ctx, projectName, modelName)
+			Expect(err).To(HaveOccurred(), "Non-member should not be able to access model")
+		})
+
+		Context("ListModels permission tests", func() {
+			var publicProjectName string
+			var privateProjectName string
+			var publicModelName string
+			var privateModelName string
+
+			BeforeEach(func() {
+				publicProjectName = tools.GenerateTestProjectName("m-list-public")
+				publicType := v1alpha1project.PUBLIC_V1alpha1ProjectType
+				_, _, err := projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+					Name:  publicProjectName,
+					Type_: &publicType,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				publicModelName = tools.GenerateTestModelName("pub-model")
+				_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: publicProjectName,
+					Name:    publicModelName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				privateProjectName = tools.GenerateTestProjectName("m-list-private")
+				privateType := v1alpha1project.PRIVATE_V1alpha1ProjectType
+				_, _, err = projectsApi.ProjectsCreateProject(ctx, v1alpha1project.V1alpha1CreateProjectRequest{
+					Name:  privateProjectName,
+					Type_: &privateType,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				privateModelName = tools.GenerateTestModelName("priv-model")
+				_, _, err = modelsApi.ModelsCreateModel(ctx, v1alpha1model.V1alpha1CreateModelRequest{
+					Project: privateProjectName,
+					Name:    privateModelName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, publicProjectName)
+				_, _, _ = projectsApi.ProjectsDeleteProject(ctx, privateProjectName)
+			})
+
+			It("should show public project models to member", Label("M00049"), func() {
+				memberType := v1alpha1project.USER_V1alpha1MemberType
+				editorRole := v1alpha1project.EDITOR_V1alpha1ProjectRoleType
+				_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, publicProjectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+					MemberId:   editorID,
+					MemberType: &memberType,
+					Role:       &editorRole,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				editorModelsApi := tools.CreateModelClientWithCookie(editorCookie)
+				listResp, _, err := editorModelsApi.ModelsListModels(ctx, &v1alpha1model.ModelsApiModelsListModelsOpts{
+					Project:  optional.NewString(publicProjectName),
+					Page:     optional.NewInt32(1),
+					PageSize: optional.NewInt32(50),
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				var found bool
+				for _, m := range listResp.Items {
+					if m.Name == publicModelName {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeTrue(), "Member should see public project models")
+			})
+
+			It("should show public project models to non-member", Label("M00050"), func() {
+				viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+				listResp, _, err := viewerModelsApi.ModelsListModels(ctx, &v1alpha1model.ModelsApiModelsListModelsOpts{
+					Project:  optional.NewString(publicProjectName),
+					Page:     optional.NewInt32(1),
+					PageSize: optional.NewInt32(50),
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				var found bool
+				for _, m := range listResp.Items {
+					if m.Name == publicModelName {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeTrue(), "Non-member should see public project models")
+			})
+
+			It("should show private project models to member", Label("M00051"), func() {
+				memberType := v1alpha1project.USER_V1alpha1MemberType
+				editorRole := v1alpha1project.EDITOR_V1alpha1ProjectRoleType
+				_, _, err := projectsApi.ProjectsAddProjectMemberWithRole(ctx, privateProjectName, v1alpha1project.ProjectsAddProjectMemberWithRoleBody{
+					MemberId:   editorID,
+					MemberType: &memberType,
+					Role:       &editorRole,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				editorModelsApi := tools.CreateModelClientWithCookie(editorCookie)
+				listResp, _, err := editorModelsApi.ModelsListModels(ctx, &v1alpha1model.ModelsApiModelsListModelsOpts{
+					Project:  optional.NewString(privateProjectName),
+					Page:     optional.NewInt32(1),
+					PageSize: optional.NewInt32(50),
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				var found bool
+				for _, m := range listResp.Items {
+					if m.Name == privateModelName {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeTrue(), "Member should see private project models")
+			})
+
+			It("should not show private project models to non-member", Label("M00052"), func() {
+				viewerModelsApi := tools.CreateModelClientWithCookie(viewerCookie)
+				listResp, _, err := viewerModelsApi.ModelsListModels(ctx, &v1alpha1model.ModelsApiModelsListModelsOpts{
+					Project:  optional.NewString(privateProjectName),
+					Page:     optional.NewInt32(1),
+					PageSize: optional.NewInt32(50),
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				var found bool
+				for _, m := range listResp.Items {
+					if m.Name == privateModelName {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeFalse(), "Non-member should not see private project models")
+			})
+		})
+	})
 })

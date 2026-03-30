@@ -24,19 +24,23 @@ import (
 	"google.golang.org/grpc/status"
 
 	modelv1alpha1 "github.com/matrixhub-ai/matrixhub/api/go/v1alpha1"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/authz"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/git"
 	"github.com/matrixhub-ai/matrixhub/internal/domain/model"
+	"github.com/matrixhub-ai/matrixhub/internal/domain/user"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/log"
 	"github.com/matrixhub-ai/matrixhub/internal/infra/utils"
 )
 
 type ModelHandler struct {
-	ms model.IModelService
+	ms           model.IModelService
+	authzService authz.IAuthzService
 }
 
-func NewModelHandler(modelService model.IModelService) IHandler {
+func NewModelHandler(modelService model.IModelService, authzService authz.IAuthzService) IHandler {
 	handler := &ModelHandler{
-		ms: modelService,
+		ms:           modelService,
+		authzService: authzService,
 	}
 	return handler
 }
@@ -160,12 +164,32 @@ func treeEntryToProtoFile(entry *git.TreeEntry) *modelv1alpha1.File {
 	}
 }
 
-func (mh *ModelHandler) RegisterToServer(options *ServerOptions) {
-	// Register GRPC Handler
-	modelv1alpha1.RegisterModelsServer(options.GRPCServer, mh)
-	if err := modelv1alpha1.RegisterModelsHandlerServer(context.Background(), options.GatewayMux, mh); err != nil {
+func (mh *ModelHandler) RegisterToServer(opt *ServerOptions) {
+	modelv1alpha1.RegisterModelsServer(opt.GRPCServer, mh)
+	if err := modelv1alpha1.RegisterModelsHandlerFromEndpoint(context.Background(), opt.GatewayMux, opt.GRPCAddr, opt.GRPCDialOpt); err != nil {
 		log.Errorf("register model handler error: %s", err.Error())
 	}
+}
+
+func (mh *ModelHandler) getAccessibleProjectIDs(ctx context.Context) ([]int, error) {
+	userIDVal := ctx.Value(user.UserIdCtxKey)
+	if userIDVal == nil {
+		return mh.authzService.GetUserAccessibleProjectIDs(ctx, 0)
+	}
+	userID, ok := userIDVal.(int)
+	if !ok {
+		return mh.authzService.GetUserAccessibleProjectIDs(ctx, 0)
+	}
+
+	allowed, err := mh.authzService.VerifyPlatformPermission(ctx, "*.*")
+	if err != nil {
+		return nil, err
+	}
+	if allowed {
+		return nil, nil
+	}
+
+	return mh.authzService.GetUserAccessibleProjectIDs(ctx, userID)
 }
 
 func (mh *ModelHandler) ListModelTaskLabels(ctx context.Context, request *modelv1alpha1.ListModelTaskLabelsRequest) (*modelv1alpha1.ListModelTaskLabelsResponse, error) {
@@ -226,7 +250,22 @@ func (mh *ModelHandler) ListModels(ctx context.Context, request *modelv1alpha1.L
 		Project:  request.Project,
 		Page:     request.Page,
 		PageSize: request.PageSize,
-		Popular:  &request.Popular, // Pass popular parameter to filter
+		Popular:  &request.Popular,
+	}
+
+	// Inject accessible project IDs
+	projectIDs, err := mh.getAccessibleProjectIDs(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get accessible projects")
+	}
+	if projectIDs != nil {
+		if len(projectIDs) == 0 {
+			return &modelv1alpha1.ListModelsResponse{
+				Items:      []*modelv1alpha1.Model{},
+				Pagination: &modelv1alpha1.Pagination{Total: 0, Page: request.Page, PageSize: request.PageSize},
+			}, nil
+		}
+		filter.ProjectIDs = projectIDs
 	}
 
 	// Call service
@@ -259,6 +298,11 @@ func (mh *ModelHandler) GetModel(ctx context.Context, request *modelv1alpha1.Get
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
+	}
+
 	// Call service
 	model, err := mh.ms.GetModel(ctx, request.Project, request.Name)
 	if err != nil {
@@ -275,6 +319,11 @@ func (mh *ModelHandler) CreateModel(ctx context.Context, request *modelv1alpha1.
 	// Validate request
 	if err := request.ValidateAll(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelPush); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
 	// Call service
@@ -298,6 +347,11 @@ func (mh *ModelHandler) DeleteModel(ctx context.Context, request *modelv1alpha1.
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelDelete); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
+	}
+
 	// Call service
 	err := mh.ms.DeleteModel(ctx, request.Project, request.Name)
 	if err != nil {
@@ -314,6 +368,11 @@ func (mh *ModelHandler) ListModelRevisions(ctx context.Context, request *modelv1
 	// Validate request
 	if err := request.ValidateAll(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
 	// Call service
@@ -335,6 +394,11 @@ func (mh *ModelHandler) ListModelCommits(ctx context.Context, request *modelv1al
 	// Validate request
 	if err := request.ValidateAll(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
 	// Call service (diff parameter is ignored for now)
@@ -369,6 +433,11 @@ func (mh *ModelHandler) GetModelCommit(ctx context.Context, request *modelv1alph
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
+	}
+
 	// Call service
 	commit, err := mh.ms.GetModelCommit(ctx, request.Project, request.Name, request.Id)
 	if err != nil {
@@ -385,6 +454,11 @@ func (mh *ModelHandler) GetModelTree(ctx context.Context, request *modelv1alpha1
 	// Validate request
 	if err := request.ValidateAll(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
 	// Call service
@@ -410,6 +484,11 @@ func (mh *ModelHandler) GetModelTree(ctx context.Context, request *modelv1alpha1
 func (mh *ModelHandler) GetModelBlob(ctx context.Context, request *modelv1alpha1.GetModelBlobRequest) (*modelv1alpha1.File, error) {
 	if err := request.ValidateAll(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify permission
+	if allowed, err := mh.authzService.VerifyProjectPermissionByName(ctx, request.Project, authz.ModelGet); err != nil || !allowed {
+		return nil, status.Error(codes.PermissionDenied, "permission denied")
 	}
 
 	entry, err := mh.ms.GetModelBlob(ctx, request.Project, request.Name, request.Revision, request.Path)

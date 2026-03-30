@@ -53,6 +53,10 @@ func (m *modelDB) List(ctx context.Context, filter *model.Filter) ([]*model.Mode
 		Joins("INNER JOIN projects p ON m.project_id = p.id")
 
 	// Apply filters
+	if len(filter.ProjectIDs) > 0 {
+		query = query.Where("m.project_id IN ?", filter.ProjectIDs)
+	}
+
 	if filter.Project != "" {
 		query = query.Where("p.name = ?", filter.Project)
 	}

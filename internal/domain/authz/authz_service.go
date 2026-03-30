@@ -30,6 +30,12 @@ type IAuthzService interface {
 
 	// VerifyProjectPermission verifies project-level permission
 	VerifyProjectPermission(ctx context.Context, projectID int, perm Permission) (bool, error)
+
+	// VerifyProjectPermissionByName resolves project name to ID, then verifies permission
+	VerifyProjectPermissionByName(ctx context.Context, projectName string, perm Permission) (bool, error)
+
+	// GetUserAccessibleProjectIDs gets all project IDs accessible to a user
+	GetUserAccessibleProjectIDs(ctx context.Context, userID int) ([]int, error)
 }
 
 // IAuthzProjectRepo project repository interface required for permission verification
@@ -37,6 +43,7 @@ type IAuthzProjectRepo interface {
 	GetUserProjectPermissions(ctx context.Context, userID int, projectID int) ([]Permission, error)
 	GetUserPlatformPermissions(ctx context.Context, userID int) ([]Permission, error)
 	GetProjectIDByName(ctx context.Context, name string) (int, error)
+	GetUserAccessibleProjectIDs(ctx context.Context, userID int) ([]int, error)
 }
 
 // AuthzService permission verification service
@@ -106,4 +113,18 @@ func (s *AuthzService) VerifyProjectPermission(ctx context.Context, projectID in
 
 	// Check if there's matching permission using regex
 	return MatchPermissions(permissions, perm), nil
+}
+
+// VerifyProjectPermissionByName resolves project name to ID, then verifies permission
+func (s *AuthzService) VerifyProjectPermissionByName(ctx context.Context, projectName string, perm Permission) (bool, error) {
+	projectID, err := s.projectRepo.GetProjectIDByName(ctx, projectName)
+	if err != nil {
+		return false, err
+	}
+	return s.VerifyProjectPermission(ctx, projectID, perm)
+}
+
+// GetUserAccessibleProjectIDs gets all project IDs where the user has membership
+func (s *AuthzService) GetUserAccessibleProjectIDs(ctx context.Context, userID int) ([]int, error) {
+	return s.projectRepo.GetUserAccessibleProjectIDs(ctx, userID)
 }
